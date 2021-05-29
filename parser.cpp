@@ -8,10 +8,9 @@
 struct TokenStream {
     const std::vector<Token>* tokens;
     int position;
-
-    void rewind() {
+void rewind() {
 #ifdef DEBUG_TOKENS
-        std::cout << "rewind()";
+        std::cout << "rewind()\n";
 #endif
         position --;
         if (position < 0)
@@ -19,10 +18,18 @@ struct TokenStream {
     }
 
     Token pop() {
-        if (position >= tokens->size())
+        position++;
+        if (position - 1 >= tokens->size()) {
+            int add = position - tokens->size() - 1;
+#ifdef DEBUG_TOKENS
+            std::cout << "pop() -> EOF";
+            if (add) std::cout << " + " << add;
+            std::cout << "\n";
+#endif
             return TOK_NONE;
+        }
 
-        Token t = (*tokens)[position++];
+        Token t = (*tokens)[position - 1];
 #ifdef DEBUG_TOKENS
         std::cout << "pop() -> " << t << "\n";
 #endif
@@ -84,7 +91,7 @@ struct TokenStream {
 
 bool parse(Atom end);
 AST_Function* parse_fn();
-AST_Node* parse_expression();
+AST_Node* parse_expression(Atom hard_delimiter = 0);
 AST_Block* parse_block();
 
 
@@ -93,6 +100,7 @@ static thread_local AST_Block* global;
 thread_local AST_Block* current;
 thread_local TokenStream ts;
 thread_local AST_Block* block;
+thread_local bool bracket;
 
 
 
@@ -161,20 +169,67 @@ AST_Function* parse_fn() {
     return fn;
 }
 
-AST_Node* parse_expression() {
-    Token t = ts.peek();
+AST_Node* parse_expression(Atom hard_delimiter) {
 
-    if (t.atom == TOK_FN) {
-        return parse_fn();
+    AST_Node* buildup = nullptr;
+
+    std::cout << "parse_expression(" << hard_delimiter << ")\n";
+
+    while (true) {
+        Token t = ts.pop();
+
+        if (hard_delimiter && t == hard_delimiter) {
+            std::cout << "parse_expression() returning via delim\n";
+            return buildup;
+        }
+
+        if (t == '(') {
+            if (buildup == nullptr) {
+                buildup = parse_expression(')');
+                continue;
+            }
+            else {
+                NOT_IMPLEMENTED(); // Function call
+            }
+        }
+
+        if (t.is_identifier()) {
+            if (buildup) {
+                add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_EXPRESSION));
+                return nullptr;
+            }
+            buildup = new AST_Reference(t);
+            continue;
+        } 
+
+        if (t.is_infix_operator()) {
+            if (!buildup) {
+                add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_EXPRESSION));
+                return nullptr;
+            }
+            AST_Node* rhs = parse_expression();
+            if (!rhs)
+                return nullptr;
+            buildup = new AST_Call(t, buildup, rhs);
+            continue;
+        }
+
+        // we've hit a token that isn't part of this expression
+        if (!hard_delimiter) {
+            // if there's no delimiter, pretend we've never seen this and be done
+            ts.rewind();
+            std::cout << "parse_expression() returning normally\n";
+            return buildup;
+        } else {
+            // if there's an explicit delimiter, this is an error.
+            add_error(new UnexpectedTokenError(t, hard_delimiter));
+            return nullptr;
+        }
+
+
     }
 
-    if (t.is_identifier()) {
-        ts.pop();
-        return new AST_Reference(t.atom);
-    }
 
-    add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_IDENTIFIER));
-    return nullptr;
 }
 
 AST_Block* parse_block() {

@@ -31,5 +31,6 @@ Atom string_to_atom(const char* str, int length);
 
 #include <assert.h>
 #define UNREACHABLE() { assert(!"UNREACHABLE"); }
+#define NOT_IMPLEMENTED() { assert(!"NOT_IMPLEMENTED"); }
 
 #define MUST(f) { if (!(f)) return 0; }

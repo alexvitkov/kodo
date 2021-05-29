@@ -81,7 +81,10 @@ std::string atom_to_string(u32 atom) {
 
 std::ostream& operator<< (std::ostream& o, Atom p) {
     if (p.atom < 128) {
-        o << '\'' << (char)p.atom << '\'';
+        if (p.atom >= 33 && p.atom <= 127)
+            o << (char)p.atom;
+        else
+            o << "Atom(" << (int)p.atom << ")";
     } 
     else if (p.atom < 256) {
         o << token_names123[p.atom - 128];
@@ -92,6 +95,7 @@ std::ostream& operator<< (std::ostream& o, Atom p) {
             case ERR_ATOM_EOF:             o << "end of file"; break;
             case ERR_ATOM_ANY_IDENTIFIER:  o << "an identifier"; break;
             case ERR_ATOM_AN_ARGUMENT:     o << "an argument"; break;
+            case ERR_ATOM_ANY_EXPRESSION:  o << "an expression"; break;
         }
     }
     else {

@@ -31,5 +31,3 @@ struct Token : Atom {
     inline Token(Atom atom) : Atom(atom) {}
     inline Token(atom_t at) : Atom(0) {}
 };
-
-std::ostream& operator<< (std::ostream& o, const Token& t);

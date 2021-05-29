@@ -58,7 +58,7 @@ static u8 char_traits[128] = {
 /* 0x27 "'"  */ CT_NONE,
 /* 0x28 '('  */ CT_OPERATOR,
 /* 0x29 ')'  */ CT_OPERATOR,
-/* 0x2a '*'  */ CT_NONE,
+/* 0x2a '*'  */ CT_OPERATOR,
 /* 0x2b '+'  */ CT_MULTICHAR_OP_START | CT_OPERATOR,
 /* 0x2c ','  */ CT_OPERATOR,
 /* 0x2d '-'  */ CT_MULTICHAR_OP_START | CT_OPERATOR,
@@ -75,7 +75,7 @@ static u8 char_traits[128] = {
 /* 0x38 '8'  */ CT_DIGIT,
 /* 0x39 '9'  */ CT_DIGIT,
 /* 0x3a ':'  */ CT_OPERATOR,
-/* 0x3b ';'  */ CT_NONE,
+/* 0x3b ';'  */ CT_OPERATOR,
 /* 0x3c '<'  */ CT_NONE,
 /* 0x3d '='  */ CT_NONE,
 /* 0x3e '>'  */ CT_NONE,
@@ -147,11 +147,6 @@ static u8 char_traits[128] = {
 };
 
 std::vector<Token> tokens;
-
-std::ostream& operator<< (std::ostream& o, const Token& t) {
-    o << t.atom;
-    return o;
-}
 
 void emit(Atom atom) {
     // std::cout << atom << "      " << (atom_t)atom << "\n";

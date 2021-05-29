@@ -30,9 +30,18 @@ struct AST_Reference : AST_Node {
     virtual void print(std::ostream& o) override;
 };
 
+struct AST_Call : AST_Node {
+    Atom fn;
+    std::vector<AST_Node*> args;
+
+    inline AST_Call(Atom fn, AST_Node* lhs, AST_Node* rhs) : fn(fn), args { lhs, rhs } {};
+    virtual void print(std::ostream& o) override;
+};
+
 struct AST_Block : AST_Node {
     virtual void print(std::ostream& o) override;
     std::vector<AST_Node*> statements;
+
 };
 
 std::ostream& operator<<(std::ostream& o, AST_Node* n);

@@ -37,7 +37,8 @@ void AST_Function::print(std::ostream& o) {
 
 
 void AST_Reference::print(std::ostream& o) {
-    o << "ref(" << atom << ")";
+    // TODO unresolved references could be colored red
+    o << atom;
 }
 
 
@@ -58,3 +59,16 @@ void AST_Block::print(std::ostream& o) {
     print_indent(o);
     o << "}\n";
 };
+
+
+
+
+void AST_Call::print(std::ostream& o) {
+    o << fn << "(";
+    for (int i = 0; i < args.size(); i++) {
+        o << args[i];
+        if (i != args.size() - 1)
+            o << ", ";
+    }
+    o << ")";
+}
