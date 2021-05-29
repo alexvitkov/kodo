@@ -24,24 +24,30 @@ struct TokenStream {
 
         Token t = (*tokens)[position++];
 #ifdef DEBUG_TOKENS
-        std::cout << "pop(" << t << ")\n";
+        std::cout << "pop() -> " << t << "\n";
 #endif
         return t;
     }
 
     Token expect(Atom expected_atom) {
         if (position >= tokens->size()) {
+#ifdef DEBUG_TOKENS
+            std::cout << "expect(" << expected_atom << ") -> EOF\n";
+#endif
             add_error(new UnexpectedTokenError(Token { ERR_ATOM_EOF }, expected_atom));
             return {};
         }
 
         Token t = (*tokens)[position++];
+#ifdef DEBUG_TOKENS
+        std::cout << "expect(" << expected_atom << ") -> " << t << "\n";
+#endif
         if (t.atom != expected_atom) {
             add_error(new UnexpectedTokenError(t, expected_atom));
             return {};
         } else {
 #ifdef DEBUG_TOKENS
-        std::cout << "expect(" << t << ")\n";
+        std::cout << "expect_id() -> " << t << "\n";
 #endif
             return t;
         }
@@ -51,7 +57,7 @@ struct TokenStream {
         if (position >= tokens->size())
             return {};
 #ifdef DEBUG_TOKENS
-        std::cout << "peek(" << (*tokens)[position] << ")\n";
+        std::cout << "peek() -> " << (*tokens)[position] << "\n";
 #endif
         return (*tokens)[position];
     }
