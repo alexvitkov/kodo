@@ -32,6 +32,7 @@ struct AST_Reference : AST_Node {
 
 struct AST_Block : AST_Node {
     virtual void print(std::ostream& o) override;
+    std::vector<AST_Node*> statements;
 };
 
 std::ostream& operator<<(std::ostream& o, AST_Node* n);

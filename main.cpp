@@ -1,16 +1,24 @@
 #include <lexer.h>
 #include <parser.h>
+#include <ast.h>
 
-char script[] = "fn haha (x: int, y: int) {}";
+#include <iostream>
+
+char script[] = "fn haha (x: int, y: int) { fn rofl() {}}";
+
+static AST_Block* global;
 
 int main() {
     init_keywords();
+    global = new AST_Block();
 
     if (!lex(script))
         return 1;
 
-    if (!parse(tokens))
+    if (!parse(global, tokens))
         return 1;
+
+    std::cout << global;
 
     return 0;
 }

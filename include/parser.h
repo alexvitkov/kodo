@@ -4,4 +4,4 @@
 #include <vector>
 
 void init_keywords();
-bool parse(const std::vector<Token>& tokens);
+bool parse(struct AST_Block* _global, const std::vector<Token>& tokens);

@@ -60,46 +60,42 @@ struct TokenStream {
 
 
 
-AST_Node* parse();
+bool parse(Atom end);
 AST_Function* parse_fn();
 AST_Node* parse_expression();
 AST_Block* parse_block();
 
 
 
-
+static thread_local AST_Block* global;
+thread_local AST_Block* current;
 thread_local TokenStream ts;
-thread_local bool done = false;
+thread_local AST_Block* block;
 
 
 
 
-bool parse(const std::vector<Token>& tokens) {
+bool parse(AST_Block* _global, const std::vector<Token>& tokens) {
+    global = _global;
+    current = global;
     ts.tokens = &tokens;
-
-    while (true) {
-        AST_Node* node = parse();
-        if (!node)
-            return done;
-        std::cout << node << "\n\n";
-    }
+    return parse(0);
 }
 
-AST_Node* parse() {
-    Token top = ts.peek();
+bool parse(Atom end) {
+    while (true) {
+        Token top = ts.peek();
+        if (top.atom == end) {
+            ts.pop();
+            return true;
+        }
 
-    if (!top) {
-        done = true;
-        return nullptr;
+        AST_Node* expr = parse_expression();
+        if (!expr) 
+            return false;
+
+        current->statements.push_back(expr);
     }
-
-    // TODO this should be a switch once keywords become static and sane
-    if (top.atom == KW_FN) {
-        return parse_fn();
-    }
-
-    add_error(new UnexpectedTokenError(top, ERR_ATOM_ANY_DECLARATION));
-    return nullptr;
 }
 
 AST_Function* parse_fn() {
@@ -113,7 +109,6 @@ AST_Function* parse_fn() {
         ts.rewind();
 
     MUST (ts.expect('('));
-
 
     while (true) {
         Token t = ts.pop();
@@ -143,7 +138,12 @@ DoneWithArguments:
 }
 
 AST_Node* parse_expression() {
-    Token t = ts.pop();
+    Token t = ts.peek();
+
+    if (t.atom == KW_FN) {
+        return parse_fn();
+    }
+
     if (t.is_identifier())
         return new AST_Reference(t.atom);
 
@@ -152,9 +152,15 @@ AST_Node* parse_expression() {
 }
 
 AST_Block* parse_block() {
-    MUST (ts.expect('{'));
-    MUST (ts.expect('}'));
-
     AST_Block* block = new AST_Block();
+
+    AST_Block* old_current = current;
+    current = block;
+
+    MUST (ts.expect('{'));
+
+    MUST(parse('}'));
+
+    current = old_current;
     return block;
 }

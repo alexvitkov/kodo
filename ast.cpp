@@ -8,6 +8,7 @@ std::ostream& operator<<(std::ostream& o, AST_Node* n) {
 }
 
 
+thread_local int indent = 0;
 
 
 bool AST_Function::add_argument(Atom identifier, AST_Node* type) {
@@ -40,8 +41,20 @@ void AST_Reference::print(std::ostream& o) {
 }
 
 
+static void print_indent(std::ostream& o) {
+    for (int i =0 ; i < indent; i++)
+        o << "    ";
+}
 
 
 void AST_Block::print(std::ostream& o) {
-    o << "{" << "}";
+    o << "{\n";
+    indent ++;
+    for (auto& stmt : statements) {
+        print_indent(o);
+        o << stmt << "\n";
+    }
+    indent --;
+    print_indent(o);
+    o << "}\n";
 };
