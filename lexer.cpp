@@ -154,7 +154,7 @@ std::ostream& operator<< (std::ostream& o, const Token& t) {
 }
 
 void emit(Atom atom) {
-    std::cout << atom << "      " << (atom_t)atom << "\n";
+    // std::cout << atom << "      " << (atom_t)atom << "\n";
     tokens.push_back({
         .atom = atom,
     });

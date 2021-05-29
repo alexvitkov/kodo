@@ -99,7 +99,7 @@ bool parse(Atom end) {
 }
 
 AST_Function* parse_fn() {
-    MUST (ts.expect(KW_FN));
+    MUST (ts.expect(TOK_FN));
 
     AST_Function* fn = new AST_Function();
 
@@ -123,29 +123,34 @@ AST_Function* parse_fn() {
             t = ts.pop();
         }
 
+
         switch ((atom_t)t) {
             case ',':
                 break;
             case ')':
                 goto DoneWithArguments;
+            default:
+                add_error(new UnexpectedTokenError(t, ERR_ATOM_AN_ARGUMENT));
+                return nullptr;
         }
     }
 DoneWithArguments:
 
     MUST (fn->body = parse_block());
-
     return fn;
 }
 
 AST_Node* parse_expression() {
     Token t = ts.peek();
 
-    if (t.atom == KW_FN) {
+    if (t.atom == TOK_FN) {
         return parse_fn();
     }
 
-    if (t.is_identifier())
+    if (t.is_identifier()) {
+        ts.pop();
         return new AST_Reference(t.atom);
+    }
 
     add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_IDENTIFIER));
     return nullptr;

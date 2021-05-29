@@ -21,9 +21,7 @@ struct Atom {
     inline Atom() : atom(0) {}
     inline Atom(atom_t atom) : atom(atom) {}
     inline operator atom_t() { return atom; }
-    inline operator bool() { return atom != 0; }
 
-    auto operator<=>(const Atom&) const = default;
     bool is_identifier();
 };
 

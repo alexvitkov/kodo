@@ -64,8 +64,6 @@ struct AtomGroup {
 
 AtomGroup user(0x1000);
 
-Atom KW_FN;
-
 Atom string_to_atom(const char* str, int length) {
     // FIXME THREADSAFETY
     tok* t = in_word_set(str, length);
@@ -93,6 +91,7 @@ std::ostream& operator<< (std::ostream& o, Atom p) {
             case ERR_ATOM_ANY_DECLARATION: o << "a declaration"; break;
             case ERR_ATOM_EOF:             o << "end of file"; break;
             case ERR_ATOM_ANY_IDENTIFIER:  o << "an identifier"; break;
+            case ERR_ATOM_AN_ARGUMENT:     o << "an argument"; break;
         }
     }
     else {

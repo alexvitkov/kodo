@@ -33,6 +33,7 @@ enum ErrorAtom : atom_t {
     ERR_ATOM_ANY_DECLARATION = 0xFFFFFF00,
     ERR_ATOM_ANY_IDENTIFIER,
     ERR_ATOM_EOF,
+    ERR_ATOM_AN_ARGUMENT,
 };
 
 void add_error(Error* err);

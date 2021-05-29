@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-char script[] = "fn ++ -- ++--+-(x: int, y: int) { fn rofl() {}}";
+char script[] = "fn foo(x: int, y: int) { fn rofl() {}}";
 
 static AST_Block* global;
 
@@ -13,8 +13,6 @@ int main() {
 
     if (!lex(script))
         return 1;
-
-    return 0;
 
     if (!parse(global, tokens))
         return 1;
