@@ -3,7 +3,7 @@
 #include <error.h>
 #include <ast.h>
 
-// #define DEBUG_TOKENS
+#define DEBUG_TOKENS
 
 struct TokenStream {
     const std::vector<Token>* tokens;
@@ -46,9 +46,25 @@ struct TokenStream {
             add_error(new UnexpectedTokenError(t, expected_atom));
             return {};
         } else {
+            return t;
+        }
+
+    }
+
+    Token expect_id() {
+        if (position >= tokens->size()) {
+            add_error(new UnexpectedTokenError(Token { ERR_ATOM_EOF }, ERR_ATOM_ANY_IDENTIFIER));
+            return {};
+        }
+
+        Token t = (*tokens)[position++];
 #ifdef DEBUG_TOKENS
         std::cout << "expect_id() -> " << t << "\n";
 #endif
+        if (!t.is_identifier()) {
+            add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_IDENTIFIER));
+            return {};
+        } else {
             return t;
         }
     }
@@ -117,7 +133,9 @@ AST_Function* parse_fn() {
     MUST (ts.expect('('));
 
     while (true) {
-        Token t = ts.pop();
+        // FIXME MAYBE fn foo(x: int, ) is currently allowed
+        t = ts.pop();
+        MUST (t);
 
         if (t.is_identifier()) {
             MUST (ts.expect(':'));
@@ -128,26 +146,16 @@ AST_Function* parse_fn() {
             MUST (fn->add_argument(t.atom, expr));
             t = ts.pop();
 
-            switch (t.atom) {
-                case ',':
-                    break;
-                case ')':
-                    goto DoneWithArguments;
-                default:
-                    add_error(new UnexpectedTokenError(t, ERR_ATOM_AN_ARGUMENT));
-                    return nullptr;
-            }
-        }
-
-        if (t.atom == ')')
-            goto DoneWithArguments;
-        else {
-            add_error(new UnexpectedTokenError(t, ')'));
-            return nullptr;
-        }
-
+            if (t.atom != ',')
+                break;
+        } else
+            break;
     }
-DoneWithArguments:
+
+    if (t.atom != ')') {
+        add_error(new UnexpectedTokenError(t, ')'));
+        return nullptr;
+    }
 
     MUST (fn->body = parse_block());
     return fn;
