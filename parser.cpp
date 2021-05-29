@@ -121,18 +121,25 @@ AST_Function* parse_fn() {
 
             MUST (fn->add_argument(t.atom, expr));
             t = ts.pop();
+
+            switch (t.atom) {
+                case ',':
+                    break;
+                case ')':
+                    goto DoneWithArguments;
+                default:
+                    add_error(new UnexpectedTokenError(t, ERR_ATOM_AN_ARGUMENT));
+                    return nullptr;
+            }
         }
 
-
-        switch ((atom_t)t) {
-            case ',':
-                break;
-            case ')':
-                goto DoneWithArguments;
-            default:
-                add_error(new UnexpectedTokenError(t, ERR_ATOM_AN_ARGUMENT));
-                return nullptr;
+        if (t.atom == ')')
+            goto DoneWithArguments;
+        else {
+            add_error(new UnexpectedTokenError(t, ')'));
+            return nullptr;
         }
+
     }
 DoneWithArguments:
 

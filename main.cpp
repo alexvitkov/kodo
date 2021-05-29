@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-char script[] = "fn foo(x: int, y: int) { fn rofl() {}}";
+char script[] = "fn foo(x: int, y: int,) { fn rofl() {}}";
 
 static AST_Block* global;
 

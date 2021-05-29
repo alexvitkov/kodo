@@ -14,7 +14,7 @@ void add_error(Error* err) {
 }
 
 void UnexpectedTokenError::print() {
-    std::cout << "Expected " << expected << " instead of " << actual << "\n";
+    std::cout << "Unexpected " << actual << " while looking for " << expected << "\n";
 }
 
 void RepeatedArgumentError::print() {
