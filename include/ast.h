@@ -32,17 +32,26 @@ struct AST_Reference : AST_Node {
 
 struct AST_Call : AST_Node {
     bool brackets;
-    Atom fn;
+    AST_Node* fn;
     std::vector<AST_Node*> args;
 
-    inline AST_Call(Atom fn, AST_Node* lhs, AST_Node* rhs) : fn(fn), args { lhs, rhs } {};
+    inline AST_Call(AST_Node* fn) : fn(fn) {}
+    inline AST_Call(Atom fn, AST_Node* lhs, AST_Node* rhs) : fn(new AST_Reference(fn)), args { lhs, rhs } {};
     virtual void print(std::ostream& o) override;
+};
+
+struct Definition {
+    Atom key;
+    AST_Node* value;
 };
 
 struct AST_Block : AST_Node {
     virtual void print(std::ostream& o) override;
-    std::vector<AST_Node*> statements;
 
+    std::vector<AST_Node*> statements;
+    std::vector<Definition> definitions;
+
+    void define(Atom key, AST_Node* value);
 };
 
 std::ostream& operator<<(std::ostream& o, AST_Node* n);

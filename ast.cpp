@@ -53,22 +53,47 @@ void AST_Block::print(std::ostream& o) {
     indent ++;
     for (auto& stmt : statements) {
         print_indent(o);
-        o << stmt << "\n";
+        o << stmt << ";\n";
     }
     indent --;
     print_indent(o);
-    o << "}\n";
+    o << "}";
 };
 
+void AST_Block::define(Atom key, AST_Node* value) {
+    definitions.push_back({ key, value });
+}
 
 
 
 void AST_Call::print(std::ostream& o) {
-    o << fn << "(";
-    for (int i = 0; i < args.size(); i++) {
-        o << args[i];
-        if (i != args.size() - 1)
-            o << ", ";
+
+    AST_Reference* _fn = dynamic_cast<AST_Reference*>(fn);
+    Atom atom = _fn->atom;
+
+    if (atom.is_infix_operator()) {
+        AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
+
+        o << args[0] << " " << fn << " ";
+
+        if (rhs_call) {
+            AST_Reference* rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
+            Atom rhs_atom = rhs_fn->atom;
+
+            if (rhs_call && rhs_atom.is_infix_operator() && rhs_atom.precedence() < atom.precedence())
+                o << "(" << args[1] << ")";
+            return;
+        }
+
+        o << args[1];
+
+    } else {
+        o << fn << "(";
+        for (int i = 0; i < args.size(); i++) {
+            o << args[i];
+            if (i != args.size() - 1)
+                o << ", ";
+        }
+        o << ")";
     }
-    o << ")";
 }
