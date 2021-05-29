@@ -27,13 +27,9 @@ enum TokenType : atom_t {
 };
 
 
-struct Token {
-    Atom atom;
-    inline bool is_identifier() { return atom.is_identifier(); }
-
-    inline operator bool() { return (bool)atom; }
-    inline operator Atom() { return atom; }
-    inline operator atom_t() { return atom.atom; }
+struct Token : Atom {
+    inline Token(Atom atom) : Atom(atom) {}
+    inline Token(atom_t at) : Atom(0) {}
 };
 
 std::ostream& operator<< (std::ostream& o, const Token& t);

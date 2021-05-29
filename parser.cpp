@@ -20,7 +20,7 @@ struct TokenStream {
 
     Token pop() {
         if (position >= tokens->size())
-            return {};
+            return TOK_NONE;
 
         Token t = (*tokens)[position++];
 #ifdef DEBUG_TOKENS
@@ -35,7 +35,7 @@ struct TokenStream {
             std::cout << "expect(" << expected_atom << ") -> EOF\n";
 #endif
             add_error(new UnexpectedTokenError(Token { ERR_ATOM_EOF }, expected_atom));
-            return {};
+            return 0;
         }
 
         Token t = (*tokens)[position++];
@@ -44,7 +44,7 @@ struct TokenStream {
 #endif
         if (t.atom != expected_atom) {
             add_error(new UnexpectedTokenError(t, expected_atom));
-            return {};
+            return 0;
         } else {
             return t;
         }
@@ -54,7 +54,7 @@ struct TokenStream {
     Token expect_id() {
         if (position >= tokens->size()) {
             add_error(new UnexpectedTokenError(Token { ERR_ATOM_EOF }, ERR_ATOM_ANY_IDENTIFIER));
-            return {};
+            return 0;
         }
 
         Token t = (*tokens)[position++];
@@ -63,7 +63,7 @@ struct TokenStream {
 #endif
         if (!t.is_identifier()) {
             add_error(new UnexpectedTokenError(t, ERR_ATOM_ANY_IDENTIFIER));
-            return {};
+            return 0;
         } else {
             return t;
         }
@@ -71,7 +71,7 @@ struct TokenStream {
 
     Token peek() {
         if (position >= tokens->size())
-            return {};
+            return 0;
 #ifdef DEBUG_TOKENS
         std::cout << "peek() -> " << (*tokens)[position] << "\n";
 #endif
@@ -126,7 +126,7 @@ AST_Function* parse_fn() {
     AST_Function* fn = new AST_Function();
 
     Token t = ts.pop();
-    if (t.atom.is_identifier()) {
+    if (t.is_identifier()) {
     } else
         ts.rewind();
 

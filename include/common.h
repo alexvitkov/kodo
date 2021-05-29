@@ -23,6 +23,7 @@ struct Atom {
     inline operator atom_t() { return atom; }
 
     bool is_identifier();
+    inline bool is_infix_operator() { return atom == '+' || atom == '*'; }
 };
 
 std::ostream& operator<< (std::ostream& o, Atom a);
