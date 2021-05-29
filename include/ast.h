@@ -31,6 +31,7 @@ struct AST_Reference : AST_Node {
 };
 
 struct AST_Call : AST_Node {
+    bool brackets;
     Atom fn;
     std::vector<AST_Node*> args;
 

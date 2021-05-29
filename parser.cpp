@@ -210,7 +210,20 @@ AST_Node* parse_expression(Atom hard_delimiter) {
             AST_Node* rhs = parse_expression();
             if (!rhs)
                 return nullptr;
-            buildup = new AST_Call(t, buildup, rhs);
+
+            AST_Call* rhs_call = dynamic_cast<AST_Call*>(rhs);
+
+            if (rhs_call && rhs_call->fn.precedence() < (t.precedence() + t.associativity()) && !rhs_call->brackets) {
+                AST_Call* call = new AST_Call(t, buildup, rhs_call->args[0]);
+                call->brackets = hard_delimiter == ')';
+                rhs_call->args[0] = call;
+                buildup = rhs_call;
+            } else {
+                AST_Call* call = new AST_Call(t, buildup, rhs);
+                call->brackets = hard_delimiter == ')';
+                buildup = call;
+            }
+
             continue;
         }
 

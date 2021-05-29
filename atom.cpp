@@ -107,3 +107,25 @@ std::ostream& operator<< (std::ostream& o, Atom p) {
 bool Atom::is_identifier() {
     return atom >= user.start && atom < user.next;
 }
+
+bool Atom::is_infix_operator() { 
+    return atom == '+' || atom == '*'; 
+}
+
+int Atom::precedence() {
+    switch(atom) {
+        case '+':
+        case '-':
+            return 10;
+        case '*':
+        case '/':
+        case '%':
+            return 11;
+        default:
+            return 10000;
+    }
+}
+
+int Atom::associativity() {
+    return 1;
+}
