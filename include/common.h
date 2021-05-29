@@ -13,14 +13,14 @@ typedef int16_t  i16;
 typedef int32_t  i32;
 typedef int64_t  i64;
 
-typedef u32 _atom_t;
+typedef u32 atom_t;
 
 struct Atom {
-    _atom_t atom;
+    atom_t atom;
 
     inline Atom() : atom(0) {}
-    inline Atom(_atom_t atom) : atom(atom) {}
-    inline operator _atom_t() { return atom; }
+    inline Atom(atom_t atom) : atom(atom) {}
+    inline operator atom_t() { return atom; }
     inline operator bool() { return atom != 0; }
 
     auto operator<=>(const Atom&) const = default;

@@ -123,7 +123,7 @@ AST_Function* parse_fn() {
             t = ts.pop();
         }
 
-        switch ((_atom_t)t) {
+        switch ((atom_t)t) {
             case ',':
                 break;
             case ')':

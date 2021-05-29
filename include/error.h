@@ -28,7 +28,7 @@ struct RepeatedArgumentError : Error {
     virtual void print() override;
 };
 
-enum ErrorAtom : _atom_t {
+enum ErrorAtom : atom_t {
     ERR_ATOM_START = 0xFFFFFF00,
     ERR_ATOM_ANY_DECLARATION = 0xFFFFFF00,
     ERR_ATOM_ANY_IDENTIFIER,

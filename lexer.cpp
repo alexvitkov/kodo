@@ -3,11 +3,17 @@
 #include <iostream>
 #include <vector>
 
+#include <string.h>
+#define register
+#include "keywords.gperf.gen.inc"
+#undef register
+
 #define CT_NONE       0x00
 #define CT_LETTER     0x01
 #define CT_DIGIT      0x02
 #define CT_WHITESPACE 0x04
 #define CT_OPERATOR   0x08
+#define CT_MULTICHAR_OP_START 0x10
 
 static u8 char_traits[128] = {
 /* 0x00      */ CT_NONE,
@@ -53,9 +59,9 @@ static u8 char_traits[128] = {
 /* 0x28 '('  */ CT_OPERATOR,
 /* 0x29 ')'  */ CT_OPERATOR,
 /* 0x2a '*'  */ CT_NONE,
-/* 0x2b '+'  */ CT_NONE,
+/* 0x2b '+'  */ CT_MULTICHAR_OP_START | CT_OPERATOR,
 /* 0x2c ','  */ CT_OPERATOR,
-/* 0x2d '-'  */ CT_NONE,
+/* 0x2d '-'  */ CT_MULTICHAR_OP_START | CT_OPERATOR,
 /* 0x2e '.'  */ CT_NONE,
 /* 0x2f '/'  */ CT_NONE,
 /* 0x30 '0'  */ CT_DIGIT,
@@ -148,6 +154,7 @@ std::ostream& operator<< (std::ostream& o, const Token& t) {
 }
 
 void emit(Atom atom) {
+    std::cout << atom << "\n";
     tokens.push_back({
         .atom = atom,
     });
@@ -161,7 +168,6 @@ bool lex(char* buffer) {
     u8 word_type = 0; // CT_LETTER or CT_DIGIT
 
     for (char* c = buffer;; c++) {
-
         if (*c < 0) {
             ERROR("Unsupported character " << (int)*c);
             return false;
@@ -185,19 +191,30 @@ bool lex(char* buffer) {
             word_start = nullptr;
         }
 
-        switch (ct) {
-            case CT_OPERATOR: {
-                emit(*c);
-                continue;
-            }
-            case CT_WHITESPACE: {
-                continue;
+        if (ct & CT_MULTICHAR_OP_START) {
+            for (int i = 5; i > 1; i--) {
+                // FIXME buffer overflow
+                tok* t = in_word_set(c, i);
+                if (t) {
+                    c += i - 1;
+                    emit(t->atom);
+                    goto Next;
+                }
             }
         }
+
+        if (ct & CT_OPERATOR) {
+            emit(*c);
+            continue;
+        }
+
+        if (ct == CT_WHITESPACE)
+            continue;
 
         if (*c == '\0')
             return true;
 
         ERROR("Unsupported character " << (int)*c);
+Next:;
     }
 }

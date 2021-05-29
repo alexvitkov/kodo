@@ -1,0 +1,10 @@
+%{
+#include "common.h"
+%}
+%compare-strncmp
+%struct-type
+struct tok { const char* name; atom_t atom; };
+%%
+fn, TOK_FN
+++, TOK_PLUSPLUS
+--, TOK_MINUSMINUS

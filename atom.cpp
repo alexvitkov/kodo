@@ -5,6 +5,13 @@
 #include <initializer_list>
 #include <iostream>
 
+// VOLATILE - must be ordered the same as the enum in Token.h
+static const char* token_names123[] = {
+    "fn",
+    "++",
+    "--",
+};
+
 struct AtomGroup {
     int start;
     int next;
@@ -18,7 +25,7 @@ struct AtomGroup {
         auto it = _forward.find(s);
 
         if (it == _forward.end()) {
-            _atom_t atom = next;
+            atom_t atom = next;
             next++;
             _forward.insert({ s, atom });
             _reverse.push_back(s);
@@ -49,29 +56,18 @@ struct AtomGroup {
     }
 };
 
-AtomGroup keywords(0x100);
 AtomGroup user(0x1000);
 
 Atom KW_FN;
 
-void init_keywords() {
-     KW_FN = keywords.find_or_add("fn", 2);
-}
-
 Atom string_to_atom(const char* str, int length) {
     // FIXME THREADSAFETY
-    Atom a = keywords.find(str, length);
-    if (a) 
-        return a;
-
     return user.find_or_add(str, length);
 }
 
 std::string atom_to_string(u32 atom) {
     // FIXME THREADSAFETY
     std::string s = "INVALID_ATOM";
-
-    if (keywords.find_reverse(atom, s)) return s;
     if (user.find_reverse(atom, s)) return s;
     return s;
 }
@@ -80,6 +76,9 @@ std::ostream& operator<< (std::ostream& o, Atom p) {
     if (p.atom < 128) {
         o << '\'' << (char)p.atom << '\'';
     } 
+    else if (p.atom < 256) {
+        o << token_names123[p.atom - 128];
+    }
     else if (p.atom >= ERR_ATOM_START) {
         switch ((ErrorAtom)p.atom) {
             case ERR_ATOM_ANY_DECLARATION: o << "a declaration"; break;
