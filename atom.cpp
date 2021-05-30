@@ -131,5 +131,10 @@ int Atom::precedence() {
 }
 
 int Atom::associativity() {
-    return 1;
+    switch(atom) {
+        case '=':
+            return 0;
+        default:
+            return 1;
+    }
 }
