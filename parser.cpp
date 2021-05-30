@@ -91,8 +91,16 @@ void rewind() {
 
 bool parse(Atom end);
 AST_Function* parse_fn();
-AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter);
 AST_Block* parse_block();
+
+// when hard_delimiter is hit, it is consumed and the expression is returned
+// when soft_delimiter is hit, it is NOT consumed.
+//
+// for example parse_expression(',', ')') will stop at either a comma or closign bracket
+// but the closing brackets won't be condumed.
+//
+// rotate_tree is a helper argument that should always be true when calling a top-level parse_expression
+AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true);
 
 
 
@@ -151,11 +159,15 @@ AST_Function* parse_fn() {
             AST_Node* expr = parse_expression(',', ')');
             MUST (expr);
 
-            MUST (fn->add_argument(tok.atom, expr));
-            tok = ts.pop();
 
-            if (tok.atom == ')')
+            MUST (fn->add_argument(tok.atom, expr));
+
+            std::cout << "done parse expr\n";
+
+            if (ts.peek() == ')') {
+                ts.pop();
                 break;
+            }
         } else
             break;
     }
@@ -164,7 +176,7 @@ AST_Function* parse_fn() {
     return fn;
 }
 
-AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter) {
+AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree) {
     AST_Node* buildup = nullptr;
 
     while (true) {
@@ -224,41 +236,14 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter) {
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-            AST_Node* rhs = parse_expression(hard_delimiter, soft_delimiter);
+            AST_Node* rhs = parse_expression(hard_delimiter, soft_delimiter, false);
             if (!rhs)
                 return nullptr;
 
-            // without precedence checks, a * b + c would parse down to this without respecting precedence:
-            //      *
-            //     / \
-            //    a   +
-            //       / \
-            //      b   c
-            // to fix this we rotate the tree in some cases.
-            // if the right-hand side operator (rhs_cll->fn) has lower precedence than the top operator (tok),
-            // or the operator is left associative and the precedences are equal, we rotate the tree:
-            //      +
-            //     / \
-            //    *   c       
-            //   / \
-            //  a   b      
-            AST_Call* rhs_call = dynamic_cast<AST_Call*>(rhs);
-            if (rhs_call) {
-                int rhs_call_prec = 10000;
-                auto _fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
-
-                if (_fn && _fn->atom.precedence() < (tok.precedence() + tok.associativity()) && !rhs_call->brackets) {
-                    // construct rotated tree, the rhs node is now on top
-                    AST_Call* call = new AST_Call(tok, buildup, rhs_call->args[0]);
-                    call->brackets = hard_delimiter == ')';
-                    rhs_call->args[0] = call;
-                    return rhs_call;
-                }
-            }
-
             AST_Call* call = new AST_Call(tok, buildup, rhs);
             call->brackets = hard_delimiter == ')';
-            return call;
+
+            return rotate_tree ? call->rotate() : call;
         }
 
         add_error(new UnexpectedTokenError(tok, soft_delimiter ? soft_delimiter : hard_delimiter));

@@ -31,13 +31,15 @@ struct AST_Reference : AST_Node {
 };
 
 struct AST_Call : AST_Node {
-    bool brackets;
+    bool brackets = false;
     AST_Node* fn;
     std::vector<AST_Node*> args;
+
 
     inline AST_Call(AST_Node* fn) : fn(fn) {}
     inline AST_Call(Atom fn, AST_Node* lhs, AST_Node* rhs) : fn(new AST_Reference(fn)), args { lhs, rhs } {};
     virtual void print(std::ostream& o) override;
+    AST_Node* rotate();
 };
 
 struct Definition {

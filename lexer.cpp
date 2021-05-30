@@ -77,7 +77,7 @@ static u8 char_traits[128] = {
 /* 0x3a ':'  */ CT_OPERATOR,
 /* 0x3b ';'  */ CT_OPERATOR,
 /* 0x3c '<'  */ CT_NONE,
-/* 0x3d '='  */ CT_NONE,
+/* 0x3d '='  */ CT_OPERATOR,
 /* 0x3e '>'  */ CT_NONE,
 /* 0x3f '?'  */ CT_NONE,
 /* 0x40 '@'  */ CT_NONE,

@@ -64,36 +64,67 @@ void AST_Block::define(Atom key, AST_Node* value) {
     definitions.push_back({ key, value });
 }
 
+#define ALWAYS_BRACKETS
 
 
 void AST_Call::print(std::ostream& o) {
-
     AST_Reference* _fn = dynamic_cast<AST_Reference*>(fn);
-    Atom atom = _fn->atom;
+    if (_fn) {
+        Atom atom = _fn->atom;
 
-    if (atom.is_infix_operator()) {
-        AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
+        if (atom.is_infix_operator()) {
 
-        o << args[0] << " " << fn << " ";
+#ifdef ALWAYS_BRACKETS
+            o << '(' << args[0] << ' ' << fn << ' ' << args[1] << ')';
+#else
+            o << args[0] << " " << fn << " ";
 
-        if (rhs_call) {
-            AST_Reference* rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
-            Atom rhs_atom = rhs_fn->atom;
+            AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
+            if (rhs_call) {
+                AST_Reference* rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
+                Atom rhs_atom = rhs_fn->atom;
 
-            if (rhs_call && rhs_atom.is_infix_operator() && rhs_atom.precedence() < atom.precedence())
-                o << "(" << args[1] << ")";
+                if (rhs_call && rhs_atom.is_infix_operator() && rhs_atom.precedence() < atom.precedence())
+                    o << "(" << args[1] << ")";
+                return;
+            }
+            o << args[1];
+#endif
+
             return;
-        }
+        } 
+    }
 
-        o << args[1];
+    o << fn << "(";
+    for (int i = 0; i < args.size(); i++) {
+        o << args[i];
+        if (i != args.size() - 1)
+            o << ", ";
+    }
+    o << ")";
+}
 
-    } else {
-        o << fn << "(";
-        for (int i = 0; i < args.size(); i++) {
-            o << args[i];
-            if (i != args.size() - 1)
-                o << ", ";
-        }
-        o << ")";
+AST_Node* AST_Call::rotate() {
+    AST_Reference* _fn = dynamic_cast<AST_Reference*>(fn);
+    Atom fn_atom = _fn->atom;
+
+
+    AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
+    if (!rhs_call) return this;
+
+    auto _rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
+    if (!_rhs_fn) return this;
+    Atom rhs_atom = _rhs_fn->atom;
+
+    if (rhs_atom.precedence() < (fn_atom.precedence() + fn_atom.associativity()) && !rhs_call->brackets) {
+        this->args[1] = rhs_call->args[0];
+        rhs_call->args[0] = this;
+
+        auto rotated_child = rhs_call->rotate();
+        return rotated_child;
+    }
+    else {
+        args[1] = rhs_call->rotate();
+        return this;
     }
 }

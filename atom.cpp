@@ -109,18 +109,22 @@ bool Atom::is_identifier() {
 }
 
 bool Atom::is_infix_operator() { 
-    return atom == '+' || atom == '*'; 
+    return atom == '+' || atom == '*' || atom == ':' || atom == '='; 
 }
 
 int Atom::precedence() {
     switch(atom) {
-        case '+':
-        case '-':
-            return 10;
+        case ':':
+            return 20;
         case '*':
         case '/':
         case '%':
-            return 11;
+            return 12;
+        case '+':
+        case '-':
+            return 10;
+        case '=':
+            return 5;
         default:
             return 10000;
     }
