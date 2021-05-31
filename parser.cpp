@@ -142,8 +142,7 @@ AST_Function* parse_fn() {
     Token tok = ts.peek();
     if (tok.is_identifier()) {
         ts.pop();
-
-        current->define(tok, fn);
+        fn->name = tok;
     }     
 
     MUST (ts.expect('('));
@@ -159,10 +158,7 @@ AST_Function* parse_fn() {
             AST_Node* expr = parse_expression(',', ')');
             MUST (expr);
 
-
             MUST (fn->add_argument(tok.atom, expr));
-
-            std::cout << "done parse expr\n";
 
             if (ts.peek() == ')') {
                 ts.pop();
@@ -216,7 +212,7 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-            buildup = new AST_Reference(tok);
+            buildup = new AST_UnresolvedReference(tok);
             continue;
         }
 

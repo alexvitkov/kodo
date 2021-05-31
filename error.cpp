@@ -17,6 +17,6 @@ void UnexpectedTokenError::print() {
     std::cout << "Unexpected " << actual << " while looking for " << expected << "\n";
 }
 
-void RepeatedArgumentError::print() {
-    std::cout << "Repeated Argument";
+void InvalidDeclarationError::print() {
+    std::cout << "InvalidDeclarationError";
 }

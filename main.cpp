@@ -1,5 +1,6 @@
 #include <lexer.h>
 #include <parser.h>
+#include <atomlinker.h>
 #include <ast.h>
 
 #include <iostream>
@@ -49,6 +50,9 @@ int main(int argc, const char** argv) {
         return 1;
 
     if (!parse(global, tokens))
+        return 1;
+
+    if (!atomlink(global))
         return 1;
 
     std::cout << global;

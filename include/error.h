@@ -18,13 +18,9 @@ struct UnexpectedTokenError : Error {
     virtual void print() override;
 };
 
-struct RepeatedArgumentError : Error {
-    struct AST_Function* fn;
-    int arg1_index, arg2_index;
-
-    inline RepeatedArgumentError(AST_Function* fn, int arg1_index, int arg2_index) 
-        : fn(fn), arg1_index(arg1_index), arg2_index(arg2_index) {}
-
+struct InvalidDeclarationError : Error {
+    struct AST_Call* declaration;
+    inline InvalidDeclarationError(struct AST_Call* decl) : declaration(decl) {}
     virtual void print() override;
 };
 

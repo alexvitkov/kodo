@@ -2,25 +2,38 @@
 #include <error.h>
 #include <iostream>
 
+thread_local static int indent = 0;
+
+
 std::ostream& operator<<(std::ostream& o, AST_Node* n) {
     n->print(o);
     return o;
 }
 
+bool AST_Node::define_tree(AST_Block* scope) { return true; }
 
-thread_local int indent = 0;
+Atom AST_Node::as_atom_reference() {
+    AST_UnresolvedReference* ref;
+    if ((ref = dynamic_cast<AST_UnresolvedReference*>(this)))
+        return ref->atom;
+    return 0;
+}
+
 
 
 bool AST_Function::add_argument(Atom identifier, AST_Node* type) {
-    bool err = false;
-    for (int i = 0; i < params.size(); i++)
-        if (params[i].identifier == identifier) {
-            err = true;
-            add_error(new RepeatedArgumentError(this, i, params.size()));
-        }
-
     params.push_back({ identifier, type });
-    return !err;
+    return true;
+}
+
+bool AST_Function::define_tree(AST_Block* scope) { 
+    if (name)
+        MUST (scope->define(name, this));
+
+    for (int i = 0; i < params.size(); i++)
+        MUST (body->define(params[i].identifier, params[i].type));
+
+    return body->define_tree(scope);
 }
 
 void AST_Function::print(std::ostream& o) {
@@ -36,9 +49,8 @@ void AST_Function::print(std::ostream& o) {
 
 
 
-void AST_Reference::print(std::ostream& o) {
-    // TODO unresolved references could be colored red
-    o << atom;
+void AST_UnresolvedReference::print(std::ostream& o) {
+    o << "\u001b[31m" << atom << "\u001b[0m";
 }
 
 
@@ -60,15 +72,44 @@ void AST_Block::print(std::ostream& o) {
     o << "}";
 };
 
-void AST_Block::define(Atom key, AST_Node* value) {
+
+bool AST_Block::define_tree(AST_Block* scope) {
+    for (AST_Node* n : statements)
+        MUST (n->define_tree(this));
+    return true;
+}
+
+bool AST_Block::define(Atom key, AST_Node* value) {
     definitions.push_back({ key, value });
+    return true;
 }
 
 #define ALWAYS_BRACKETS
 
 
+bool AST_Call::define_tree(AST_Block* scope) { 
+    Atom fn_atom = this->as_atom_reference();
+    if (fn_atom == ':') {
+        Atom identifier = args[0]->as_atom_reference();
+        if (!identifier) {
+            add_error(new InvalidDeclarationError(this));
+            return false;
+        }
+
+        MUST (scope->define(identifier, args[1]));
+    }
+    else {
+        MUST (fn->define_tree(scope));
+
+        for (AST_Node* n : args)
+            MUST (n->define_tree(scope));
+    }
+
+    return true;
+}
+
 void AST_Call::print(std::ostream& o) {
-    AST_Reference* _fn = dynamic_cast<AST_Reference*>(fn);
+    AST_UnresolvedReference* _fn = dynamic_cast<AST_UnresolvedReference*>(fn);
     if (_fn) {
         Atom atom = _fn->atom;
 
@@ -105,14 +146,14 @@ void AST_Call::print(std::ostream& o) {
 }
 
 AST_Node* AST_Call::rotate() {
-    AST_Reference* _fn = dynamic_cast<AST_Reference*>(fn);
+    AST_UnresolvedReference* _fn = dynamic_cast<AST_UnresolvedReference*>(fn);
     Atom fn_atom = _fn->atom;
 
 
     AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
     if (!rhs_call) return this;
 
-    auto _rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
+    auto _rhs_fn = dynamic_cast<AST_UnresolvedReference*>(rhs_call->fn);
     if (!_rhs_fn) return this;
     Atom rhs_atom = _rhs_fn->atom;
 

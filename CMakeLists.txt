@@ -20,9 +20,10 @@ add_executable(kodo
     main.cpp
     error.cpp
     atom.cpp
+    ast.cpp
     lexer.cpp
     parser.cpp
-    ast.cpp
+    atomlinker.cpp
     keywords.gperf.gen.inc)
 
 target_include_directories(kodo PRIVATE include)
