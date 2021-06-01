@@ -3,3 +3,4 @@ build
 compile_commands.json 
 run.sh
 test.kodo
+todo.txt

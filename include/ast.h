@@ -20,8 +20,8 @@ struct Node {
     virtual Type* get_type() = 0;
     virtual void print(std::ostream& o, bool print_definition) = 0;
 
-    virtual bool pass1(Scope* scope);
-    virtual bool pass2(Node** my_location, Scope* scope);
+    virtual bool forward_declare_pass(Scope* scope);
+    virtual bool resolve_pass(Node** my_location, Scope* scope);
 
 
     virtual int resolve_friction(Type* type, Scope* scope);
@@ -39,8 +39,8 @@ struct Function : Node {
     virtual Type* get_type() override;
     FunctionType* get_fn_type();
     virtual void print(std::ostream& o, bool print_definition) override;
-    virtual bool pass1(Scope* scope) override;
-    virtual bool pass2(Node** my_location, Scope* scope) override;
+    virtual bool forward_declare_pass(Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
 };
 
 struct UnresolvedRef : Node {
@@ -64,7 +64,7 @@ struct Call : Node {
 
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
-    virtual bool pass2(Node** my_location, Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
     Node* rotate();
 };
 
@@ -88,8 +88,8 @@ struct Scope : Node {
     bool define(Atom key, Node* value);
     Variable* define_variable(Atom key, Type* type);
 
-    virtual bool pass1(Scope* scope) override;
-    virtual bool pass2(Node** my_location, Scope* scope) override;
+    virtual bool forward_declare_pass(Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
 };
 
 struct Variable : Node {

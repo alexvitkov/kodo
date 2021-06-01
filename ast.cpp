@@ -11,8 +11,6 @@ std::ostream& operator<<(std::ostream& o, Node* n) {
     return o;
 }
 
-bool Node::pass1(Scope* scope) { return true; }
-bool Node::pass2(Node**, Scope* scope) { return true; }
 
 Atom Node::as_atom_reference() {
     UnresolvedRef* ref;
@@ -22,23 +20,8 @@ Atom Node::as_atom_reference() {
 }
 
 
-bool Function::pass1(Scope* scope) { 
-    if (name)
-        scope->define(name, this);
-
-    MUST (body->pass1(scope));
-    return true;
-}
 
 
-bool Function::pass2(Node** my_location, Scope* scope) { 
-    // for (int i = 0; i < param_types.size(); i++) {
-        // FIXME more strict checks on the form of the parameters
-        // MUST (params[i]->pass2(&params[i], body));
-    // }
-
-    return body->pass2((Node**)&body, scope);
-}
 
 void Function::print(std::ostream& o, bool print_definition) {
     if (print_definition || !name) {
@@ -57,10 +40,6 @@ void Function::print(std::ostream& o, bool print_definition) {
 }
 
 
-
-// bool AST_UnresolvedReference::pass2(AST_Node** my_location, AST_Block* scope) {
-//     return true;
-// }
 
 void UnresolvedRef::print(std::ostream& o, bool print_definition) {
     o << "\u001b[31m" << atom << "\u001b[0m";
@@ -86,18 +65,6 @@ void Scope::print(std::ostream& o, bool print_definition) {
     o << "}";
 };
 
-bool Scope::pass1(Scope* scope) {
-    for (Node* n : statements)
-        MUST (n->pass1(this));
-    return true;
-}
-
-bool Scope::pass2(Node** my_location, Scope* scope) {
-    for (int i = 0; i < statements.size(); i++)
-        MUST (statements[i]->pass2(&statements[i], this));
-    return true;
-}
-
 bool Scope::define(Atom key, Node* value) {
     definitions.push_back({ key, value });
     // std::cout << "Defined " << key << " := " << value << "\n\n\n";
@@ -120,77 +87,7 @@ void Variable::print(std::ostream& o, bool print_definition) {
 #define ALWAYS_BRACKETS
 
 
-bool Call::pass2(Node** my_location, Scope* scope) { 
-    Atom fn_atom = fn->as_atom_reference();
 
-    if (fn_atom == ':') {
-        Atom identifier = args[0]->as_atom_reference();
-        if (!identifier) {
-            add_error(new InvalidDeclarationError(this));
-            return false;
-        }
-
-        Type* type = dynamic_cast<Type*>(args[1]);
-        if (!type) {
-            add_error(new InvalidDeclarationError(this));
-            return false;
-        }
-
-        Variable* var = scope->define_variable(identifier, type);
-        MUST (var);
-        *my_location = var;
-        delete this;
-    } else {
-        if (!fn_atom) {
-            add_error(new InvalidCallError(this));
-            return false;
-        }
-
-        std::vector<Function*> possible_overloads;
-
-        // FIXME this ignores shadowing
-        for (Scope* s = scope; s; s = s->parent) {
-            for (Definition& def : s->definitions) {
-                if (def.key == fn_atom) {
-                    Function* possible_fn = dynamic_cast<Function*>(def.value);
-
-                    possible_overloads.push_back(possible_fn);
-                }
-            }
-        }
-
-        if (possible_overloads.empty()) {
-            add_error(new InvalidCallError(this));
-            return false;
-        }
-
-        int min_friction = INT32_MAX;
-        Function* best_overload = nullptr;
-
-        for (Function* overload : possible_overloads) {
-            int friction = 0;
-            for (int i = 0; i < args.size(); i++)
-                friction += args[i]->resolve_friction(overload->get_fn_type()->params[i], scope);
-            if (friction < min_friction) {
-                min_friction = friction;
-                best_overload = overload;
-            }
-        }
-
-        if (!best_overload || min_friction >= INFINITE_FRICTION) {
-            add_error(new InvalidCallError(this));
-            return false;
-        }
-
-        delete (UnresolvedRef*)fn;
-        fn = best_overload;
-
-        for (int i = 0; i < args.size(); i++)
-            args[i] = args[i]->resolve_as(best_overload->get_fn_type()->params[i], scope);
-    }
-
-    return true;
-}
 
 void Call::print(std::ostream& o, bool print_definition) {
     UnresolvedRef* _fn = dynamic_cast<UnresolvedRef*>(fn);
