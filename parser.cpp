@@ -1,3 +1,4 @@
+#include <type.h>
 #include <common.h>
 #include <parser.h>
 #include <error.h>
@@ -90,8 +91,8 @@ void rewind() {
 
 
 bool parse(Atom end);
-AST_Function* parse_fn();
-AST_Block* parse_block();
+Function* parse_fn();
+Scope* parse_block();
 
 // when hard_delimiter is hit, it is consumed and the expression is returned
 // when soft_delimiter is hit, it is NOT consumed.
@@ -100,20 +101,20 @@ AST_Block* parse_block();
 // but the closing brackets won't be condumed.
 //
 // rotate_tree is a helper argument that should always be true when calling a top-level parse_expression
-AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true);
+Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true);
 
 
 
-static thread_local AST_Block* global;
-thread_local AST_Block* current;
+static thread_local Scope* global;
+thread_local Scope* current;
 thread_local TokenStream ts;
-thread_local AST_Block* block;
+thread_local Scope* block;
 thread_local bool bracket;
 
 
 
 
-bool parse(AST_Block* _global, const std::vector<Token>& tokens) {
+bool parse(Scope* _global, const std::vector<Token>& tokens) {
     global = _global;
     current = global;
     ts.tokens = &tokens;
@@ -128,7 +129,7 @@ bool parse(Atom end) {
             return true;
         }
 
-        AST_Node* expr = parse_expression(';', '}');
+        Node* expr = parse_expression(';', '}');
         if (!expr) 
             return false;
 
@@ -136,8 +137,9 @@ bool parse(Atom end) {
     }
 }
 
-AST_Function* parse_fn() {
-    AST_Function* fn = new AST_Function();
+Function* parse_fn() {
+    Function* fn = new Function();
+    fn->type = new FunctionType();
 
     Token tok = ts.peek();
     if (tok.is_identifier()) {
@@ -147,33 +149,27 @@ AST_Function* parse_fn() {
 
     MUST (ts.expect('('));
 
-    while (true) {
-        // FIXME MAYBE fn foo(x: int, ) is currently allowed
-        tok = ts.pop();
-        MUST (tok);
+    // FIXME MAYBE fn foo(x: int, ) is currently allowed
+    while (ts.peek() != ')') {
 
-        if (tok.is_identifier()) {
-            MUST (ts.expect(':'));
+        MUST (tok = ts.expect_id());
+        fn->param_names.push_back(tok);
+        MUST (ts.expect(':'));
 
-            AST_Node* expr = parse_expression(',', ')');
-            MUST (expr);
+        Node* expr = parse_expression(',', ')');
+        MUST (expr);
 
-            MUST (fn->add_argument(tok.atom, expr));
-
-            if (ts.peek() == ')') {
-                ts.pop();
-                break;
-            }
-        } else
-            break;
+        fn->type->params.push_back((Type*)expr);
     }
+
+    ts.pop(); // discard the ')'
 
     MUST (fn->body = parse_block());
     return fn;
 }
 
-AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree) {
-    AST_Node* buildup = nullptr;
+Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree) {
+    Node* buildup = nullptr;
 
     while (true) {
         Token tok = ts.pop();
@@ -192,10 +188,10 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate
                 continue;
             } else {
                 // Funciton call
-                AST_Call* new_call = new AST_Call(buildup);
+                Call* new_call = new Call(buildup);
 
                 while (ts.peek() != ')') {
-                    AST_Node* arg = parse_expression(',', ')');
+                    Node* arg = parse_expression(',', ')');
                     MUST (arg);
                     new_call->args.push_back(arg);
                 }
@@ -212,7 +208,7 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-            buildup = new AST_UnresolvedReference(tok);
+            buildup = new UnresolvedRef(tok);
             continue;
         }
 
@@ -227,16 +223,35 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate
             continue;
         }
 
+        if (tok >= TOK_I8 && tok <= TOK_U64) {
+            if (buildup) {
+                add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
+                return nullptr;
+            }
+            switch (tok) {
+                case TOK_I8:  buildup = &t_i8;  break;
+                case TOK_I16: buildup = &t_i16; break;
+                case TOK_I32: buildup = &t_i8;  break;
+                case TOK_I64: buildup = &t_i8;  break;
+                case TOK_U8:  buildup = &t_u8;  break;
+                case TOK_U16: buildup = &t_u16; break;
+                case TOK_U32: buildup = &t_u32; break;
+                case TOK_U64: buildup = &t_u64; break;
+            }
+            continue;
+        }
+
+
         if (tok.is_infix_operator()) {
             if (!buildup) {
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-            AST_Node* rhs = parse_expression(hard_delimiter, soft_delimiter, false);
+            Node* rhs = parse_expression(hard_delimiter, soft_delimiter, false);
             if (!rhs)
                 return nullptr;
 
-            AST_Call* call = new AST_Call(tok, buildup, rhs);
+            Call* call = new Call(tok, buildup, rhs);
             call->brackets = hard_delimiter == ')';
 
             return rotate_tree ? call->rotate() : call;
@@ -247,10 +262,10 @@ AST_Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate
     }
 }
 
-AST_Block* parse_block() {
-    AST_Block* block = new AST_Block();
+Scope* parse_block() {
+    Scope* block = new Scope(current);
 
-    AST_Block* old_current = current;
+    Scope* old_current = current;
     current = block;
 
     MUST (ts.expect('{'));

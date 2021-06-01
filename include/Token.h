@@ -17,7 +17,15 @@ enum TokenType : atom_t {
     TOK_CLOSESQUARE = ']',
 
     // VOLATILE - must be ordered the same as the string array in atom.cpp
-    TOK_FN = 0x80,
+    TOK_I8 = 0x80,
+    TOK_I16,
+    TOK_I32,
+    TOK_I64,
+    TOK_U8,
+    TOK_U16,
+    TOK_U32,
+    TOK_U64,
+    TOK_FN,
     TOK_PLUSPLUS,
     TOK_MINUSMINUS,
 

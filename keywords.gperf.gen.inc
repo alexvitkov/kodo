@@ -1,6 +1,6 @@
 /* ANSI-C code produced by gperf version 3.1 */
 /* Command-line: gperf --output-file=/home/alex/kodo/keywords.gperf.gen.inc /home/alex/kodo/keywords.gperf  */
-/* Computed positions: -k'1' */
+/* Computed positions: -k'1-2' */
 
 #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
       && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
@@ -35,12 +35,12 @@
 #line 6 "/home/alex/kodo/keywords.gperf"
 struct tok { const char* name; atom_t atom; };
 
-#define TOTAL_KEYWORDS 3
+#define TOTAL_KEYWORDS 11
 #define MIN_WORD_LENGTH 2
-#define MAX_WORD_LENGTH 2
-#define MIN_HASH_VALUE 0
-#define MAX_HASH_VALUE 2
-/* maximum key range = 3, duplicates = 0 */
+#define MAX_WORD_LENGTH 3
+#define MIN_HASH_VALUE 2
+#define MAX_HASH_VALUE 32
+/* maximum key range = 31, duplicates = 0 */
 
 #ifdef __GNUC__
 __inline
@@ -49,40 +49,39 @@ __inline
 inline
 #endif
 #endif
-/*ARGSUSED*/
 static unsigned int
 hash (register const char *str, register size_t len)
 {
   static unsigned char asso_values[] =
     {
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 2, 3, 1, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 0, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-      3, 3, 3, 3, 3, 3
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33,  4, 33, 15, 33, 33, 33,  9,
+      33, 10, 33, 33,  0, 33,  0, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 10, 33, 33,  5, 33, 33, 33, 33,
+      10, 33, 33, 33, 33, 33, 33,  0, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
+      33, 33, 33, 33, 33, 33
     };
-  return asso_values[(unsigned char)str[0]];
+  return len + asso_values[(unsigned char)str[1]] + asso_values[(unsigned char)str[0]];
 }
 
 struct tok *
@@ -90,12 +89,35 @@ in_word_set (register const char *str, register size_t len)
 {
   static struct tok wordlist[] =
     {
+      {""}, {""},
+#line 15 "/home/alex/kodo/keywords.gperf"
+      {"u8", TOK_U8,},
+#line 18 "/home/alex/kodo/keywords.gperf"
+      {"u64", TOK_U64,},
+      {""}, {""}, {""},
+#line 11 "/home/alex/kodo/keywords.gperf"
+      {"i8", TOK_I8,},
+#line 14 "/home/alex/kodo/keywords.gperf"
+      {"i64", TOK_I64,},
+      {""},
+#line 9 "/home/alex/kodo/keywords.gperf"
+      {"++", TOK_PLUSPLUS},
+      {""},
+#line 16 "/home/alex/kodo/keywords.gperf"
+      {"u16", TOK_U16,},
+#line 17 "/home/alex/kodo/keywords.gperf"
+      {"u32", TOK_U32,},
+      {""}, {""}, {""},
+#line 12 "/home/alex/kodo/keywords.gperf"
+      {"i16", TOK_I16,},
+#line 13 "/home/alex/kodo/keywords.gperf"
+      {"i32", TOK_I32,},
+      {""}, {""}, {""},
 #line 8 "/home/alex/kodo/keywords.gperf"
       {"fn", TOK_FN},
+      {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
 #line 10 "/home/alex/kodo/keywords.gperf"
-      {"--", TOK_MINUSMINUS},
-#line 9 "/home/alex/kodo/keywords.gperf"
-      {"++", TOK_PLUSPLUS}
+      {"--", TOK_MINUSMINUS}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

@@ -4,70 +4,124 @@
 
 #include <iosfwd>
 #include <vector>
+#include <unordered_map>
 
-struct AST_Node;
-struct AST_Function;
-struct AST_UnresolvedReference;
-struct AST_Call;
-struct AST_Block;
 
-struct AST_Node {
-    virtual void print(std::ostream& o) = 0;
+struct Node;
+struct Function;
+struct UnresolvedRef;
+struct Call;
+struct Scope;
+struct Variable;
+struct Type;
+struct FunctionType;
 
-    virtual bool define_tree(AST_Block* scope);
+struct Node {
+    virtual Type* get_type() = 0;
+    virtual void print(std::ostream& o, bool print_definition) = 0;
+
+    virtual bool pass1(Scope* scope);
+    virtual bool pass2(Node** my_location, Scope* scope);
+
+
+    virtual int resolve_friction(Type* type, Scope* scope);
+    virtual Node* resolve_as(Type* type, Scope* scope);
 
     Atom as_atom_reference();
 };
 
-struct AST_Function : AST_Node {
-    struct Argument {
-        Atom identifier;
-        AST_Node* type;
-    };
-
+struct Function : Node {
     Atom name = 0;
-    AST_Block* body;
-    std::vector<Argument> params;
+    Scope* body;
+    std::vector<Atom> param_names;
+    FunctionType* type = nullptr;
 
-    virtual void print(std::ostream& o) override;
-    virtual bool define_tree(AST_Block* scope) override;
-    bool add_argument(Atom identifier, AST_Node* type);
+    virtual Type* get_type() override;
+    FunctionType* get_fn_type();
+    virtual void print(std::ostream& o, bool print_definition) override;
+    virtual bool pass1(Scope* scope) override;
+    virtual bool pass2(Node** my_location, Scope* scope) override;
 };
 
-struct AST_UnresolvedReference : AST_Node {
+struct UnresolvedRef : Node {
     Atom atom;
 
-    inline AST_UnresolvedReference(Atom atom) : atom(atom) {}
+    inline UnresolvedRef(Atom atom) : atom(atom) {}
 
-    virtual void print(std::ostream& o) override;
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+    virtual int resolve_friction(Type* type, Scope* scope) override;
+    virtual Node* resolve_as(Type* type, Scope* scope) override;
 };
 
-struct AST_Call : AST_Node {
+struct Call : Node {
     bool brackets = false;
-    AST_Node* fn;
-    std::vector<AST_Node*> args;
+    Node* fn;
+    std::vector<Node*> args;
 
+    inline Call(Node* fn) : fn(fn) {}
+    inline Call(Atom fn, Node* lhs, Node* rhs) : fn(new UnresolvedRef(fn)), args { lhs, rhs } {};
 
-    inline AST_Call(AST_Node* fn) : fn(fn) {}
-    inline AST_Call(Atom fn, AST_Node* lhs, AST_Node* rhs) : fn(new AST_UnresolvedReference(fn)), args { lhs, rhs } {};
-    virtual void print(std::ostream& o) override;
-    virtual bool define_tree(AST_Block* scope) override;
-    AST_Node* rotate();
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+    virtual bool pass2(Node** my_location, Scope* scope) override;
+    Node* rotate();
 };
 
 struct Definition {
     Atom key;
-    AST_Node* value;
+    Node* value;
 };
 
-struct AST_Block : AST_Node {
-    virtual void print(std::ostream& o) override;
+struct Scope : Node {
+    Scope* parent = nullptr;
 
-    std::vector<AST_Node*> statements;
+    inline Scope(Scope* parent) : parent(parent) {}
+
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+
+    std::vector<Node*> statements;
     std::vector<Definition> definitions;
+    std::unordered_map<atom_t, Variable*> variables;
 
-    bool define(Atom key, AST_Node* value);
-    virtual bool define_tree(AST_Block* scope) override;
+    bool define(Atom key, Node* value);
+    Variable* define_variable(Atom key, Type* type);
+
+    virtual bool pass1(Scope* scope) override;
+    virtual bool pass2(Node** my_location, Scope* scope) override;
 };
 
-std::ostream& operator<<(std::ostream& o, AST_Node* n);
+struct Variable : Node {
+    Atom name;
+    Scope* scope;
+    Type* type;
+
+    inline Variable(Atom name, Scope* block, Type* type) 
+        : name(name), scope(block), type(type) {}
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+};
+
+struct Type : Node {
+    Atom atom;
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+    inline Type(Atom atom) : atom(atom) {}
+};
+
+struct FunctionType : Type {
+    bool temporary = true;
+    Type* return_type;
+    std::vector<Type*> params;
+    
+    inline FunctionType(): Type(0), temporary(true) {}
+
+    inline FunctionType(Type* return_type, const std::vector<Type*>& param_types)
+        : return_type(return_type), params(param_types), Type(0) {}
+
+    virtual void print(std::ostream& o, bool print_definition) override;
+};
+
+
+std::ostream& operator<<(std::ostream& o, Node* n);

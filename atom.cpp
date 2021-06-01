@@ -7,6 +7,14 @@
 
 // VOLATILE - must be ordered the same as the enum in Token.h
 static const char* token_names123[] = {
+    "i8",
+    "i16",
+    "i32",
+    "i64",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
     "fn",
     "++",
     "--",

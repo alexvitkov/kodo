@@ -19,8 +19,14 @@ struct UnexpectedTokenError : Error {
 };
 
 struct InvalidDeclarationError : Error {
-    struct AST_Call* declaration;
-    inline InvalidDeclarationError(struct AST_Call* decl) : declaration(decl) {}
+    struct Call* declaration;
+    inline InvalidDeclarationError(struct Call* decl) : declaration(decl) {}
+    virtual void print() override;
+};
+
+struct InvalidCallError : Error {
+    Call* call;
+    inline InvalidCallError(struct Call* call) : call(call) {}
     virtual void print() override;
 };
 

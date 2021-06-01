@@ -8,3 +8,11 @@ struct tok { const char* name; atom_t atom; };
 fn, TOK_FN
 ++, TOK_PLUSPLUS
 --, TOK_MINUSMINUS
+i8, TOK_I8,
+i16, TOK_I16,
+i32, TOK_I32,
+i64, TOK_I64,
+u8, TOK_U8,
+u16, TOK_U16,
+u32, TOK_U32,
+u64, TOK_U64,

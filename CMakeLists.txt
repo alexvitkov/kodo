@@ -21,6 +21,7 @@ add_executable(kodo
     error.cpp
     atom.cpp
     ast.cpp
+    type.cpp
     lexer.cpp
     parser.cpp
     atomlinker.cpp

@@ -7,7 +7,7 @@
 
 char script[] = "fn foo() { };";
 
-static AST_Block* global;
+static Scope* global;
 
 
 static char* readfile(const char* file) {
@@ -38,7 +38,7 @@ static char* readfile(const char* file) {
 }
 
 int main(int argc, const char** argv) {
-    global = new AST_Block();
+    global = new Scope(nullptr);
 
     char* f = readfile("test.kodo");
     if (!f) {

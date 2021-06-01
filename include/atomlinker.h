@@ -2,4 +2,4 @@
 
 #include <ast.h>
 
-bool atomlink(AST_Block* scope);
+bool atomlink(Scope* scope);

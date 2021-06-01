@@ -1,5 +1,9 @@
 #include <atomlinker.h>
 
-bool atomlink(AST_Block* scope) {
-    return scope->define_tree(nullptr);
+bool atomlink(Scope* scope) {
+    if (!scope->pass1(nullptr))
+        return false;
+    if (!scope->pass2(nullptr, nullptr))
+        return false;
+    return true;
 }

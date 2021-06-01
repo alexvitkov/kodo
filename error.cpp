@@ -3,6 +3,7 @@
 #include <mutex>
 
 #include <error.h>
+#include <ast.h>
 
 std::vector<Error*> errors;
 std::mutex errors_mutex;
@@ -19,4 +20,8 @@ void UnexpectedTokenError::print() {
 
 void InvalidDeclarationError::print() {
     std::cout << "InvalidDeclarationError";
+}
+
+void InvalidCallError::print() {
+    std::cout << "InvalidCallError: " << call;
 }
