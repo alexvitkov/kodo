@@ -12,10 +12,11 @@ void add_error(Error* err) {
     std::unique_lock<std::mutex> _lock(errors_mutex);
     errors.push_back(err);
     err->print();
+    std::cout << "\n\n";
 }
 
 void UnexpectedTokenError::print() {
-    std::cout << "Unexpected " << actual << " while looking for " << expected << "\n";
+    std::cout << "Unexpected " << actual << " while looking for " << expected;
 }
 
 void InvalidDeclarationError::print() {

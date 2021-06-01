@@ -21,11 +21,10 @@ struct Node {
     virtual void print(std::ostream& o, bool print_definition) = 0;
 
     virtual bool forward_declare_pass(Scope* scope);
-    virtual bool resolve_pass(Node** my_location, Scope* scope);
 
+    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope);
 
     virtual int resolve_friction(Type* type, Scope* scope);
-    virtual Node* resolve_as(Type* type, Scope* scope);
 
     Atom as_atom_reference();
 };
@@ -40,7 +39,7 @@ struct Function : Node {
     FunctionType* get_fn_type();
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
 };
 
 struct UnresolvedRef : Node {
@@ -51,12 +50,15 @@ struct UnresolvedRef : Node {
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual int resolve_friction(Type* type, Scope* scope) override;
-    virtual Node* resolve_as(Type* type, Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
 };
 
 struct Call : Node {
     bool brackets = false;
-    Node* fn;
+    bool resolved = false;
+    bool tried_resolved = false;
+
+    Node* fn = nullptr;
     std::vector<Node*> args;
 
     inline Call(Node* fn) : fn(fn) {}
@@ -64,7 +66,8 @@ struct Call : Node {
 
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
-    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
+    virtual int resolve_friction(Type* type, Scope* scope) override;
     Node* rotate();
 };
 
@@ -89,7 +92,7 @@ struct Scope : Node {
     Variable* define_variable(Atom key, Type* type);
 
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual bool resolve_pass(Node** my_location, Scope* scope) override;
+    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
 };
 
 struct Variable : Node {

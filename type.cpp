@@ -25,29 +25,34 @@ FunctionType* get(Type* return_type, const std::vector<Type*>& param_types) {
 
 
 
-bool Node::resolve_pass(Node**, Scope* scope) { 
+bool Node::resolve_pass(Node**, Type*, Scope*) { 
     return true; 
 }
 
-bool Function::resolve_pass(Node** my_location, Scope* scope) { 
+bool Function::resolve_pass(Node** my_location, Type* type, Scope* scope) { 
     // for (int i = 0; i < param_types.size(); i++) {
         // FIXME more strict checks on the form of the parameters
         // MUST (params[i]->resolve_pass(&params[i], body));
     // }
 
-    return body->resolve_pass((Node**)&body, scope);
+    return body->resolve_pass(nullptr, nullptr, scope);
 }
 
-bool Scope::resolve_pass(Node** my_location, Scope* scope) {
+bool Scope::resolve_pass(Node**, Type*, Scope* scope) {
     for (int i = 0; i < statements.size(); i++)
-        MUST (statements[i]->resolve_pass(&statements[i], this));
+        MUST (statements[i]->resolve_pass(&statements[i], nullptr, this));
     return true;
 }
 
-bool Call::resolve_pass(Node** my_location, Scope* scope) { 
+bool Call::resolve_pass(Node** my_location, Type* wanted_type, Scope* scope) { 
+    if (tried_resolved)
+        return resolved;
+    tried_resolved = true;
     Atom fn_atom = fn->as_atom_reference();
 
     if (fn_atom == ':') {
+        assert(my_location);
+
         Atom identifier = args[0]->as_atom_reference();
         if (!identifier) {
             add_error(new InvalidDeclarationError(this));
@@ -62,6 +67,7 @@ bool Call::resolve_pass(Node** my_location, Scope* scope) {
 
         Variable* var = scope->define_variable(identifier, type);
         MUST (var);
+
         *my_location = var;
         delete this;
     } else {
@@ -110,38 +116,49 @@ bool Call::resolve_pass(Node** my_location, Scope* scope) {
         fn = best_overload;
 
         for (int i = 0; i < args.size(); i++)
-            args[i] = args[i]->resolve_as(best_overload->get_fn_type()->params[i], scope);
+            MUST (args[i]->resolve_pass(&args[i], best_overload->get_fn_type()->params[i], scope));
     }
 
+    resolved = true;
     return true;
+}
+
+int Call::resolve_friction(Type* type, Scope* scope) {
+    if (resolved)
+        return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
+
+    if (!resolve_pass(nullptr, nullptr, scope)) {
+        return INFINITE_FRICTION;
+    }
+
+    return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
 }
 
 
 
 
 int Node::resolve_friction(Type* type, Scope* _) {
-    return (type == get_type()) ? 0 : INFINITE_FRICTION;
+    return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
 }
 
 int UnresolvedRef::resolve_friction(Type* type, Scope* scope) {
-    return resolve_as(type, scope) ? 0 : INFINITE_FRICTION;
+    return resolve_pass(nullptr, type, scope) ? 0 : INFINITE_FRICTION;
 }
 
 
 
-Node* Node::resolve_as(Type* type, Scope* _) {
-    return (type == get_type()) ? this : nullptr;
-}
-
-Node* UnresolvedRef::resolve_as(Type* type, Scope* scope) {
+bool UnresolvedRef::resolve_pass(Node** location, Type* type, Scope* scope) {
     // assuming we're resolving a variable
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (auto& vardecl: s->variables) {
-            if (vardecl.first == atom && type == vardecl.second->type) 
-                return vardecl.second;
+            if (vardecl.first == atom && type == vardecl.second->type)  {
+                if (location)
+                    *location =vardecl.second;
+                return true;
+            }
         }
     }
-    return nullptr;
+    return false;
 }
 
 
@@ -154,5 +171,11 @@ FunctionType* Function::get_fn_type() { return type; }
 Type* Variable::get_type()      { return type; }
 
 Type* UnresolvedRef::get_type() { return nullptr; }
-Type* Call::get_type()          { return nullptr; }
+
 Type* Scope::get_type()         { return nullptr; }
+
+Type* Call::get_type() {
+    if (resolved)
+        return ((Function*)fn)->get_fn_type()->return_type;
+    return nullptr;
+}

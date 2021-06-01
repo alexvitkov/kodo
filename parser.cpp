@@ -164,6 +164,13 @@ Function* parse_fn() {
 
     ts.pop(); // discard the ')'
 
+    if (ts.peek() == ':') {
+        ts.pop();
+        Node* return_type = parse_expression(0, '{');
+        MUST (return_type);
+        fn->type->return_type = (Type*)return_type;
+    }
+
     MUST (fn->body = parse_block());
     return fn;
 }
