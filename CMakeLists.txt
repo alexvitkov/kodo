@@ -26,6 +26,7 @@ add_executable(kodo
     forward_declare.cpp
     parser.cpp
     atomlinker.cpp
+    NumberLiteral.cpp
     keywords.gperf.gen.inc)
 
 target_include_directories(kodo PRIVATE include)

@@ -2,8 +2,10 @@
 #include <error.h>
 #include <iostream>
 #include <vector>
-
 #include <string.h>
+
+#include <NumberLiteral.h>
+
 #define register
 #include "keywords.gperf.gen.inc"
 #undef register
@@ -149,8 +151,11 @@ static u8 char_traits[128] = {
 std::vector<Token> tokens;
 
 void emit(Atom atom) {
-    // std::cout << atom << "      " << (atom_t)atom << "\n";
     tokens.push_back(Token(atom));
+}
+
+void emit(NumberLiteral* nl) {
+    tokens.push_back(Token::number_literal(nl));
 }
 
 
@@ -159,6 +164,7 @@ bool lex(char* buffer) {
     
     char* word_start = nullptr;
     u8 word_type = 0; // CT_LETTER or CT_DIGIT
+    NumberLiteral* writing_literal = nullptr;
 
     for (char* c = buffer;; c++) {
         if (*c < 0) {
@@ -172,6 +178,16 @@ bool lex(char* buffer) {
             if (!word_start) {
                 word_start = c;
                 word_type = ct;
+
+                if (word_type == CT_DIGIT)
+                    writing_literal = new NumberLiteral();
+            }
+
+            if (word_type == CT_DIGIT) {
+                if (ct != CT_DIGIT)
+                    ERROR("invalid digit");
+
+                writing_literal->digits.push_back(*c - '0');
             }
             continue;
         } else if (word_start) {
@@ -179,7 +195,7 @@ bool lex(char* buffer) {
                 Atom atom = string_to_atom(word_start, c - word_start);
                 emit(atom);
             } else {
-                ERROR("numbers not implemented");
+                emit(writing_literal);
             }
             word_start = nullptr;
         }

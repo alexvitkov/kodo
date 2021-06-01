@@ -25,6 +25,8 @@ enum TokenType : atom_t {
     TOK_U16,
     TOK_U32,
     TOK_U64,
+    TOK_NUMBER_LITERAL,
+    TOK_TYPE,
     TOK_FN,
     TOK_PLUSPLUS,
     TOK_MINUSMINUS,
@@ -36,6 +38,10 @@ enum TokenType : atom_t {
 
 
 struct Token : Atom {
+    struct NumberLiteral* nl;
+
     inline Token(Atom atom) : Atom(atom) {}
-    inline Token(atom_t at) : Atom(0) {}
+    inline Token(atom_t at) : Atom(at) {}
+
+    static inline Token number_literal(NumberLiteral* nl) { Token t(TOK_NUMBER_LITERAL); t.nl = nl; return t; };
 };

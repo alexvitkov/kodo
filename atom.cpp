@@ -15,6 +15,7 @@ static const char* token_names123[] = {
     "u16",
     "u32",
     "u64",
+    "number_literal",
     "fn",
     "++",
     "--",

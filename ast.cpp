@@ -1,4 +1,4 @@
-#include "type.h"
+#include <Type.h>
 #include <ast.h>
 #include <error.h>
 #include <iostream>

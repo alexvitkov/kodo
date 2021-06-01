@@ -1,9 +1,8 @@
+#include <Type.h>
 #include <ast.h>
-#include <type.h>
 #include <error.h>
 #include <iostream>
 
-Type t_type(0);
 Type t_i8 (TOK_I8);
 Type t_i16(TOK_I16);
 Type t_i32(TOK_I32);
@@ -12,6 +11,8 @@ Type t_u8 (TOK_U8);
 Type t_u16(TOK_U16);
 Type t_u32(TOK_U32);
 Type t_u64(TOK_U64);
+Type t_number_literal(TOK_NUMBER_LITERAL);
+Type t_type(TOK_TYPE);
 
 
 
@@ -165,6 +166,7 @@ bool UnresolvedRef::resolve_pass(Node** location, Type* type, Scope* scope) {
 
 
 Type* Type::get_type()          { return &t_type; }
+Type* NumberLiteral::get_type() { return &t_number_literal; }
 
 Type* Function::get_type()      { return type; }
 FunctionType* Function::get_fn_type() { return type; }

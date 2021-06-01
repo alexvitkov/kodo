@@ -1,4 +1,4 @@
-#include <type.h>
+#include <Type.h>
 #include <common.h>
 #include <parser.h>
 #include <error.h>
@@ -181,6 +181,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
     while (true) {
         Token tok = ts.pop();
 
+        if (tok.atom == TOK_NUMBER_LITERAL) {
+            if (buildup) {
+                add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
+                return nullptr;
+            }
+            buildup = tok.nl;
+            continue;
+        }
+
         if (hard_delimiter && tok == hard_delimiter)
             return buildup;
 
@@ -230,20 +239,22 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
             continue;
         }
 
-        if (tok >= TOK_I8 && tok <= TOK_U64) {
+        if (tok >= TOK_I8 && tok <= TOK_NUMBER_LITERAL) {
             if (buildup) {
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
             switch (tok) {
-                case TOK_I8:  buildup = &t_i8;  break;
-                case TOK_I16: buildup = &t_i16; break;
-                case TOK_I32: buildup = &t_i8;  break;
-                case TOK_I64: buildup = &t_i8;  break;
-                case TOK_U8:  buildup = &t_u8;  break;
-                case TOK_U16: buildup = &t_u16; break;
-                case TOK_U32: buildup = &t_u32; break;
-                case TOK_U64: buildup = &t_u64; break;
+                case TOK_I8:   buildup = &t_i8;  break;
+                case TOK_I16:  buildup = &t_i16; break;
+                case TOK_I32:  buildup = &t_i8;  break;
+                case TOK_I64:  buildup = &t_i8;  break;
+                case TOK_U8:   buildup = &t_u8;  break;
+                case TOK_U16:  buildup = &t_u16; break;
+                case TOK_U32:  buildup = &t_u32; break;
+                case TOK_U64:  buildup = &t_u64; break;
+                case TOK_NUMBER_LITERAL: buildup = &t_number_literal; break;
+                case TOK_TYPE: buildup = &t_type; break;
             }
             continue;
         }

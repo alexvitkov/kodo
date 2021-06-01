@@ -7,7 +7,6 @@
 #include <unordered_map>
 
 
-struct Node;
 struct Function;
 struct UnresolvedRef;
 struct Call;
@@ -16,18 +15,9 @@ struct Variable;
 struct Type;
 struct FunctionType;
 
-struct Node {
-    virtual Type* get_type() = 0;
-    virtual void print(std::ostream& o, bool print_definition) = 0;
-
-    virtual bool forward_declare_pass(Scope* scope);
-
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope);
-
-    virtual int resolve_friction(Type* type, Scope* scope);
-
-    Atom as_atom_reference();
-};
+#include <Node.h>
+#include <Type.h>
+#include <NumberLiteral.h>
 
 struct Function : Node {
     Atom name = 0;
@@ -106,25 +96,7 @@ struct Variable : Node {
     virtual void print(std::ostream& o, bool print_definition) override;
 };
 
-struct Type : Node {
-    Atom atom;
-    virtual Type* get_type() override;
-    virtual void print(std::ostream& o, bool print_definition) override;
-    inline Type(Atom atom) : atom(atom) {}
-};
 
-struct FunctionType : Type {
-    bool temporary = true;
-    Type* return_type;
-    std::vector<Type*> params;
-    
-    inline FunctionType(): Type(0), temporary(true) {}
-
-    inline FunctionType(Type* return_type, const std::vector<Type*>& param_types)
-        : return_type(return_type), params(param_types), Type(0) {}
-
-    virtual void print(std::ostream& o, bool print_definition) override;
-};
 
 
 std::ostream& operator<<(std::ostream& o, Node* n);
