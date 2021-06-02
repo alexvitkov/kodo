@@ -1,8 +1,7 @@
 #pragma once
 
-#include <Node.h>
 #include <vector>
-#include <Cast.h>
+#include <Node/Cast.h>
 
 struct NumberLiteral : Node {
     bool negative;

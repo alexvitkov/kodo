@@ -4,8 +4,6 @@
 #include <Token.h>
 
 
-#define ERROR(msg) { std::cerr << msg; return 0; }
-
 struct Error {
     virtual void print() = 0;
 };
@@ -28,6 +26,18 @@ struct InvalidCallError : Error {
     Call* call;
     inline InvalidCallError(struct Call* call) : call(call) {}
     virtual void print() override;
+};
+
+struct UnsupportedCharacterError : Error {
+    char character;
+    inline UnsupportedCharacterError(char ch) : character(ch) {}
+    virtual void print() override;
+};
+
+struct InvalidTokenError : Error {
+    std::string tok;
+    virtual void print() override;
+    inline InvalidTokenError(std::string tok) : tok(tok) {}
 };
 
 enum ErrorAtom : atom_t {

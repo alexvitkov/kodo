@@ -2,7 +2,12 @@
 #include <common.h>
 #include <parser.h>
 #include <error.h>
-#include <ast.h>
+
+
+#include <Node/Scope.h>
+#include <Node/Function.h>
+#include <Node/Call.h>
+#include <Node/NumberLiteral.h>
 
 //#define DEBUG_TOKENS
 
@@ -106,7 +111,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
 
 
 static thread_local Scope* global;
-thread_local Scope* current;
+thread_local Scope* current_context;
 thread_local TokenStream ts;
 thread_local Scope* block;
 thread_local bool bracket;
@@ -116,28 +121,33 @@ thread_local bool bracket;
 
 bool parse(Scope* _global, const std::vector<Token>& tokens) {
     global = _global;
-    current = global;
+    current_context = global;
     ts.tokens = &tokens;
-    return parse(0);
+    return parse(0); // we pass 0 (EOF) as delimiter, parse until end of file
 }
 
-bool parse(Atom end) {
+// delimiter will be consumed
+bool parse(Atom delimiter) {
     while (true) {
         Token top = ts.peek();
-        if (top.atom == end) {
+        if (top.atom == delimiter) {
             ts.pop();
             return true;
         }
 
-        Node* expr = parse_expression(';', '}');
+        // parse expression, delimtiter is either ; or 'delimiter'
+        // the ; will be consumed, 'delimiter' will not.
+        Node* expr = parse_expression(';', delimiter);
         if (!expr) 
             return false;
 
-        current->statements.push_back(expr);
+        current_context->statements.push_back(expr);
     }
 }
 
 Function* parse_fn() {
+    // syntax for functions is "fn [NAME] ( ARGS ) [: RETURNTYPE] BODY
+    // the fn keyword has been consumed before calling this function.
     Function* fn = new Function();
     fn->type = new FunctionType();
 
@@ -165,6 +175,7 @@ Function* parse_fn() {
     ts.pop(); // discard the ')'
 
     if (ts.peek() == ':') {
+        // parse return type
         ts.pop();
         Node* return_type = parse_expression(0, '{');
         MUST (return_type);
@@ -281,15 +292,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
 }
 
 Scope* parse_block() {
-    Scope* block = new Scope(current);
+    Scope* block = new Scope(current_context);
 
-    Scope* old_current = current;
-    current = block;
+    Scope* old_current = current_context;
+    current_context = block;
 
     MUST (ts.expect('{'));
 
     MUST(parse('}'));
 
-    current = old_current;
+    current_context = old_current;
     return block;
 }

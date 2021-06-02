@@ -23,9 +23,7 @@ add_executable(kodo
     ast.cpp
     type.cpp
     lexer.cpp
-    forward_declare.cpp
     parser.cpp
-    atomlinker.cpp
     NumberLiteral.cpp
     keywords.gperf.gen.inc)
 

@@ -1,7 +1,15 @@
 #include <Type.h>
-#include <ast.h>
 #include <error.h>
 #include <iostream>
+
+
+#include <Node/UnresolvedRef.h>
+#include <Node/Function.h>
+#include <Node/Call.h>
+#include <Node/Scope.h>
+#include <Node/Variable.h>
+#include <Node/Cast.h>
+
 
 thread_local static int indent = 0;
 
@@ -183,4 +191,25 @@ void Cast::print(std::ostream& o, bool print_definition) {
 
 Type* Cast::get_type() {
     NOT_IMPLEMENTED();
+}
+
+
+
+
+bool Node::forward_declare_pass(Scope* scope) { 
+    return true; 
+}
+
+bool Function::forward_declare_pass(Scope* scope) { 
+    if (name)
+        scope->define(name, this);
+
+    MUST (body->forward_declare_pass(scope));
+    return true;
+}
+
+bool Scope::forward_declare_pass(Scope* scope) {
+    for (Node* n : statements)
+        MUST (n->forward_declare_pass(this));
+    return true;
 }

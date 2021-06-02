@@ -18,7 +18,7 @@ struct Node {
         Scope* scope
     );
 
-    virtual Node* resolve_pass_cast_wrapper(
+    Node* resolve_pass_cast_wrapper(
         Type* wanted_type,
         int* friction,
         Scope* scope
@@ -28,3 +28,5 @@ struct Node {
 
     virtual ~Node();
 };
+
+std::ostream& operator<<(std::ostream& o, Node* n);

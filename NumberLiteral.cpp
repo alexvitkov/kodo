@@ -1,5 +1,4 @@
-#include <ast.h>
-#include <NumberLiteral.h>
+#include <Node/NumberLiteral.h>
 #include <iostream>
 
 

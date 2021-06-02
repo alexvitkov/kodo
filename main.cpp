@@ -1,7 +1,9 @@
 #include <lexer.h>
 #include <parser.h>
-#include <atomlinker.h>
-#include <ast.h>
+
+#include <Type.h>
+#include <Node/Scope.h>
+#include <Node/Cast.h>
 
 #include <iostream>
 
@@ -22,7 +24,7 @@ static char* readfile(const char* file) {
     long length = ftell(f);
     rewind(f);
     char* buf = (char*)malloc(length + 1);
-    buf[length] = 0;
+    buf[length] = 0; // the buffer we pass to lex must be 0-terminated
 
     int nread = fread(buf, 1, length, f);
     if (nread < length) {
@@ -34,6 +36,9 @@ static char* readfile(const char* file) {
     fclose(f);
     return buf;
 }
+
+
+
 
 int main(int argc, const char** argv) {
     global = new Scope(nullptr);
@@ -51,10 +56,13 @@ int main(int argc, const char** argv) {
     if (!parse(global, tokens))
         return 1;
 
-    if (!atomlink(global))
+    if (!global->forward_declare_pass(nullptr))
         return 1;
 
-    std::cout << global;
+    if (!global->resolve_pass(nullptr, nullptr, nullptr))
+        return 1;
 
+
+    std::cout << global << "\n\n\n";
     return 0;
 }

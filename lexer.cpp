@@ -4,7 +4,7 @@
 #include <vector>
 #include <string.h>
 
-#include <NumberLiteral.h>
+#include <Node/NumberLiteral.h>
 
 #define register
 #include "keywords.gperf.gen.inc"
@@ -161,14 +161,13 @@ void emit(NumberLiteral* nl) {
 
 // buffer must be zero-terminated
 bool lex(char* buffer) {
-    
     char* word_start = nullptr;
     u8 word_type = 0; // CT_LETTER or CT_DIGIT
     NumberLiteral* writing_literal = nullptr;
 
     for (char* c = buffer;; c++) {
         if (*c < 0) {
-            ERROR("Unsupported character " << (int)*c);
+            add_error(new UnsupportedCharacterError(*c));
             return false;
         }
 
@@ -184,8 +183,12 @@ bool lex(char* buffer) {
             }
 
             if (word_type == CT_DIGIT) {
-                if (ct != CT_DIGIT)
-                    ERROR("invalid digit");
+                if (ct != CT_DIGIT) {
+                    while (char_traits[*c] & (CT_LETTER | CT_DIGIT))
+                        c++;
+                    add_error(new InvalidTokenError(std::string(word_start, c - word_start)));
+                    return false;
+                }
 
                 writing_literal->digits.push_back(*c - '0');
             }
@@ -223,7 +226,8 @@ bool lex(char* buffer) {
         if (*c == '\0')
             return true;
 
-        ERROR("Unsupported character " << (int)*c);
+        add_error(new UnsupportedCharacterError(*c));
+        return false;
 Next:;
     }
 }

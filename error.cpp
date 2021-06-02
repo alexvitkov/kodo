@@ -2,8 +2,9 @@
 #include <vector>
 #include <mutex>
 
+#include <Node.h>
+#include <Node/Call.h>
 #include <error.h>
-#include <ast.h>
 
 std::vector<Error*> errors;
 std::mutex errors_mutex;
@@ -25,4 +26,12 @@ void InvalidDeclarationError::print() {
 
 void InvalidCallError::print() {
     std::cout << "InvalidCallError: " << call;
+}
+
+void UnsupportedCharacterError::print() {
+    std::cout << "UnsupportedCharacterError: " << (int)character;
+}
+
+void InvalidTokenError::print() {
+    std::cout << "InvalidTokenError: " << tok;
 }

@@ -1,7 +1,12 @@
-#include <Type.h>
-#include <ast.h>
 #include <error.h>
 #include <iostream>
+
+#include <Type.h>
+#include <Node/Scope.h>
+#include <Node/Cast.h>
+#include <Node/Function.h>
+#include <Node/Call.h>
+#include <Node/Variable.h>
 
 Type t_i8 (TOK_I8);
 Type t_i16(TOK_I16);
@@ -51,7 +56,8 @@ Node* Function::resolve_pass(Type*, int*, Scope* scope) {
         // MUST (params[i]->resolve_pass(&params[i], body));
     // }
 
-    return body->resolve_pass(nullptr, nullptr, scope);
+    MUST (body->resolve_pass(nullptr, nullptr, scope));
+    return this;
 }
 
 Node* Scope::resolve_pass(Type*, int*, Scope* scope) {
