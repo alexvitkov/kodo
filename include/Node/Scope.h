@@ -15,7 +15,10 @@ struct Cast;
 struct Scope : Node {
     Scope* parent = nullptr;
 
-    inline Scope(Scope* parent) : parent(parent) {}
+    inline Scope(Scope* parent) : parent(parent) {
+        if (!parent)
+            init_global_scope();
+    }
 
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
@@ -31,4 +34,7 @@ struct Scope : Node {
 
     virtual bool forward_declare_pass(Scope* scope) override;
     virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
+
+private:
+    void init_global_scope();
 };

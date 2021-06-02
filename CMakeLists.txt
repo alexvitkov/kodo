@@ -22,6 +22,7 @@ add_executable(kodo
     error.cpp
     atom.cpp
     ast.cpp
+    Scope.cpp
     node_print.cpp
     type.cpp
     lexer.cpp

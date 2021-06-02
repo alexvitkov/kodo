@@ -256,16 +256,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 return nullptr;
             }
             switch (tok) {
-                case TOK_I8:   buildup = &t_i8;  break;
-                case TOK_I16:  buildup = &t_i16; break;
-                case TOK_I32:  buildup = &t_i32; break;
-                case TOK_I64:  buildup = &t_i64; break;
-                case TOK_U8:   buildup = &t_u8;  break;
-                case TOK_U16:  buildup = &t_u16; break;
-                case TOK_U32:  buildup = &t_u32; break;
-                case TOK_U64:  buildup = &t_u64; break;
-                case TOK_NUMBER_LITERAL: buildup = &t_number_literal; break;
-                case TOK_TYPE: buildup = &t_type; break;
+                case TOK_NUMBER_LITERAL: 
+                    buildup = &t_number_literal; 
+                    break;
+                case TOK_TYPE:
+                    buildup = &t_type; 
+                    break;
+                default:
+                    buildup = primitive_numeric_types[tok - TOK_I8];
+                    break;
             }
             continue;
         }

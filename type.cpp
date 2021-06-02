@@ -19,6 +19,12 @@ Type t_u64(TOK_U64);
 Type t_number_literal(TOK_NUMBER_LITERAL);
 Type t_type(TOK_TYPE);
 
+// VOLATILE - those must be ordered the same way as the TOK_* enum entries
+Type* const primitive_numeric_types[8] = {
+    &t_i8, &t_i16, &t_i32, &t_i64,
+    &t_u8, &t_u16, &t_u32, &t_u64,
+};
+
 
 struct FunctionTypeHash {
     size_t operator() (const FunctionType& ft) const {

@@ -42,3 +42,5 @@ extern Type t_u32;
 extern Type t_u64;
 extern Type t_number_literal;
 extern Type t_type;
+
+extern Type* const primitive_numeric_types[8];
