@@ -27,7 +27,7 @@ struct Scope : Node {
 
 
     bool define(Atom key, Node* value);
-    Variable* define_variable(Atom key, Type* type);
+    Variable* define_variable(Atom key, Type* type, Node* source_node);
 
     virtual bool forward_declare_pass(Scope* scope) override;
     virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;

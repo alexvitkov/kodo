@@ -1,7 +1,7 @@
 #include <Type.h>
 #include <common.h>
 #include <parser.h>
-#include <error.h>
+#include <Error.h>
 
 
 #include <Node/Scope.h>
@@ -119,10 +119,10 @@ thread_local bool bracket;
 
 
 
-bool parse(Scope* _global, const std::vector<Token>& tokens) {
+bool parse(Scope* _global, InputFile* input) {
     global = _global;
     current_context = global;
-    ts.tokens = &tokens;
+    ts.tokens = &input->tokens;
     return parse(0); // we pass 0 (EOF) as delimiter, parse until end of file
 }
 
@@ -258,8 +258,8 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
             switch (tok) {
                 case TOK_I8:   buildup = &t_i8;  break;
                 case TOK_I16:  buildup = &t_i16; break;
-                case TOK_I32:  buildup = &t_i8;  break;
-                case TOK_I64:  buildup = &t_i8;  break;
+                case TOK_I32:  buildup = &t_i32; break;
+                case TOK_I64:  buildup = &t_i64; break;
                 case TOK_U8:   buildup = &t_u8;  break;
                 case TOK_U16:  buildup = &t_u16; break;
                 case TOK_U32:  buildup = &t_u32; break;

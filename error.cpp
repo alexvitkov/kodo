@@ -2,9 +2,9 @@
 #include <vector>
 #include <mutex>
 
+#include <Error.h>
 #include <Node.h>
 #include <Node/Call.h>
-#include <error.h>
 
 std::vector<Error*> errors;
 std::mutex errors_mutex;
@@ -34,4 +34,14 @@ void UnsupportedCharacterError::print() {
 
 void InvalidTokenError::print() {
     std::cout << "InvalidTokenError: " << tok;
+}
+
+void FailedToReadInputFileError::print() {
+    std::cout << "Failed to open input file '" << path << "'";
+}
+
+void AlreadyDefinedError::print() {
+    std::cout << "Already defined:\n";
+    for (Node* d : definitions)
+        std::cout << d << "\n";
 }

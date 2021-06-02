@@ -1,4 +1,4 @@
-#include <error.h>
+#include <Error.h>
 #include <iostream>
 
 #include <Type.h>
@@ -89,7 +89,7 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             return nullptr;
         }
 
-        return scope->define_variable(identifier, type);
+        return scope->define_variable(identifier, type, this);
     } else {
         if (!fn_atom) {
             add_error(new InvalidCallError(this));

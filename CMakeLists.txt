@@ -18,6 +18,7 @@ endif()
 
 add_executable(kodo
     main.cpp
+    InputFile.cpp
     error.cpp
     atom.cpp
     ast.cpp

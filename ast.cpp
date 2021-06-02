@@ -1,7 +1,7 @@
-#include <Type.h>
-#include <error.h>
 #include <iostream>
 
+#include <Error.h>
+#include <Type.h>
 
 #include <Node/UnresolvedRef.h>
 #include <Node/Function.h>
@@ -76,11 +76,18 @@ void Scope::print(std::ostream& o, bool print_definition) {
 
 bool Scope::define(Atom key, Node* value) {
     definitions.push_back({ key, value });
-    // std::cout << "Defined " << key << " := " << value << "\n\n\n";
     return true;
 }
 
-Variable* Scope::define_variable(Atom key, Type* type) {
+Variable* Scope::define_variable(Atom key, Type* type, Node* source_node) {
+    if (variables.contains(key)) {
+        std::vector<Node*> defs {
+            variables[key],
+            source_node,
+        };
+        add_error(new AlreadyDefinedError(defs));
+        return nullptr;
+    }
     Variable* var = new Variable(key, this, type);
     variables[key] = var;
     return var;

@@ -1,11 +1,18 @@
 #pragma once
 
+#include <vector>
 #include <iostream>
 #include <Token.h>
 
 
 struct Error {
     virtual void print() = 0;
+};
+
+struct FailedToReadInputFileError : Error {
+    std::string path;
+    inline FailedToReadInputFileError(std::string path) : path(path) {}
+    virtual void print() override;
 };
 
 struct UnexpectedTokenError : Error {
@@ -19,6 +26,12 @@ struct UnexpectedTokenError : Error {
 struct InvalidDeclarationError : Error {
     struct Call* declaration;
     inline InvalidDeclarationError(struct Call* decl) : declaration(decl) {}
+    virtual void print() override;
+};
+
+struct AlreadyDefinedError : Error {
+    std::vector<struct Node*> definitions;
+    AlreadyDefinedError(std::vector<Node*> nodes) : definitions(nodes) {}
     virtual void print() override;
 };
 
@@ -39,6 +52,7 @@ struct InvalidTokenError : Error {
     virtual void print() override;
     inline InvalidTokenError(std::string tok) : tok(tok) {}
 };
+
 
 enum ErrorAtom : atom_t {
     ERR_ATOM_START = 0xFFFFFF00,

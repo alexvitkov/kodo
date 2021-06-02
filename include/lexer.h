@@ -3,8 +3,7 @@
 #include <vector>
 
 #include <Token.h>
+#include <InputFile.h>
 
 
-extern std::vector<Token> tokens;
-
-extern bool lex(char* buffer);
+extern bool lex(InputFile* input);

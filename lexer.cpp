@@ -1,10 +1,11 @@
 #include <lexer.h>
-#include <error.h>
+#include <Error.h>
 #include <iostream>
 #include <vector>
 #include <string.h>
 
 #include <Node/NumberLiteral.h>
+#include <InputFile.h>
 
 #define register
 #include "keywords.gperf.gen.inc"
@@ -148,24 +149,23 @@ static u8 char_traits[128] = {
 /* 0x7f      */ CT_NONE,
 };
 
-std::vector<Token> tokens;
 
-void emit(Atom atom) {
-    tokens.push_back(Token(atom));
+void emit(InputFile* input, Atom atom) {
+    input->tokens.push_back(Token(atom));
 }
 
-void emit(NumberLiteral* nl) {
-    tokens.push_back(Token::number_literal(nl));
+void emit(InputFile* input, NumberLiteral* nl) {
+    input->tokens.push_back(Token::number_literal(nl));
 }
 
 
 // buffer must be zero-terminated
-bool lex(char* buffer) {
+bool lex(InputFile* input) {
     char* word_start = nullptr;
     u8 word_type = 0; // CT_LETTER or CT_DIGIT
     NumberLiteral* writing_literal = nullptr;
 
-    for (char* c = buffer;; c++) {
+    for (char* c = input->buffer;; c++) {
         if (*c < 0) {
             add_error(new UnsupportedCharacterError(*c));
             return false;
@@ -196,9 +196,9 @@ bool lex(char* buffer) {
         } else if (word_start) {
             if (word_type == CT_LETTER) {
                 Atom atom = string_to_atom(word_start, c - word_start);
-                emit(atom);
+                emit(input, atom);
             } else {
-                emit(writing_literal);
+                emit(input, writing_literal);
             }
             word_start = nullptr;
         }
@@ -209,14 +209,14 @@ bool lex(char* buffer) {
                 tok* t = in_word_set(c, i);
                 if (t) {
                     c += i - 1;
-                    emit(t->atom);
+                    emit(input, t->atom);
                     goto Next;
                 }
             }
         }
 
         if (ct & CT_OPERATOR) {
-            emit(*c);
+            emit(input, *c);
             continue;
         }
 
