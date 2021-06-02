@@ -20,11 +20,34 @@ Type t_number_literal(TOK_NUMBER_LITERAL);
 Type t_type(TOK_TYPE);
 
 
+struct FunctionTypeHash {
+    size_t operator() (const FunctionType& ft) const {
+        size_t p = (size_t)ft.return_type;
+        for (Node* n : ft.params) {
+            p <<= 1;
+            p ^= (size_t)n;
+        }
+        return p;
+    }
+};
 
+std::unordered_map<FunctionType, FunctionType*, FunctionTypeHash> fn_types;
 
-FunctionType* get(Type* return_type, const std::vector<Type*>& param_types) {
-    // FIXME uniqueness
-    return new FunctionType(return_type, param_types);
+FunctionType* make_function_type_unique(FunctionType& temp) {
+    auto it = fn_types.find(temp);
+    if (it == fn_types.end()) {
+        FunctionType* ft = new FunctionType(temp);
+        fn_types[temp] = ft;
+        return ft;
+    } else {
+        return it->second;
+    }
+}
+
+bool FunctionType::operator==(const FunctionType& other) const {
+    MUST (return_type == other.return_type);
+    MUST (params == other.params);
+    return true;
 }
 
 
@@ -55,6 +78,10 @@ Node* Function::resolve_pass(Type*, int*, Scope* scope) {
         // FIXME more strict checks on the form of the parameters
         // MUST (params[i]->resolve_pass(&params[i], body));
     // }
+
+    FunctionType* _type = make_function_type_unique(*type);
+    delete type;
+    type = _type;
 
     MUST (body->resolve_pass(nullptr, nullptr, scope));
     return this;
@@ -190,3 +217,4 @@ Type* Call::get_type() {
         return ((Function*)fn)->get_fn_type()->return_type;
     return nullptr;
 }
+

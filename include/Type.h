@@ -13,11 +13,13 @@ struct Type : Node {
 };
 
 struct FunctionType : Type {
-    bool temporary = true;
     Type* return_type;
     std::vector<Type*> params;
     
-    inline FunctionType(): Type(0), temporary(true) {}
+    inline FunctionType(): Type(0) {}
+
+    bool operator==(const FunctionType& other) const;
+
 
     inline FunctionType(Type* return_type, const std::vector<Type*>& param_types)
         : return_type(return_type), params(param_types), Type(0) {}
