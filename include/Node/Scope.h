@@ -6,7 +6,7 @@
 
 struct Definition {
     Atom key;
-    Node* value;
+    struct Function* value;
 };
 
 struct Variable;
@@ -26,7 +26,7 @@ struct Scope : Node {
     std::vector<Cast*> casts;
 
 
-    bool define(Atom key, Node* value);
+    bool define_function(Atom key, Function* value);
     Variable* define_variable(Atom key, Type* type, Node* source_node);
 
     virtual bool forward_declare_pass(Scope* scope) override;

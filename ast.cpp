@@ -74,7 +74,17 @@ void Scope::print(std::ostream& o, bool print_definition) {
     o << "}";
 };
 
-bool Scope::define(Atom key, Node* value) {
+bool Scope::define_function(Atom key, Function* value) {
+    for (const Definition& def : definitions) {
+        if (def.key.atom == key.atom && def.value->type->equals(value->type, false)) {
+            add_error(new AlreadyDefinedError({
+                def.value,
+                value
+            }));
+            return false;
+        }
+    }
+    
     definitions.push_back({ key, value });
     return true;
 }
@@ -209,7 +219,7 @@ bool Node::forward_declare_pass(Scope* scope) {
 
 bool Function::forward_declare_pass(Scope* scope) { 
     if (name)
-        scope->define(name, this);
+        MUST (scope->define_function(name, this));
 
     MUST (body->forward_declare_pass(scope));
     return true;

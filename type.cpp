@@ -44,9 +44,10 @@ FunctionType* make_function_type_unique(FunctionType& temp) {
     }
 }
 
-bool FunctionType::operator==(const FunctionType& other) const {
-    MUST (return_type == other.return_type);
-    MUST (params == other.params);
+bool FunctionType::equals(const FunctionType* other, bool compare_return_types) const {
+    MUST (params == other->params);
+    if (compare_return_types)
+        MUST (return_type == other->return_type);
     return true;
 }
 

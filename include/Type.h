@@ -18,8 +18,11 @@ struct FunctionType : Type {
     
     inline FunctionType(): Type(0) {}
 
-    bool operator==(const FunctionType& other) const;
+    bool equals(const FunctionType* other, bool compare_return_types = true) const;
 
+    inline bool operator==(const FunctionType& other) const {
+        return equals(&other, true);
+    }
 
     inline FunctionType(Type* return_type, const std::vector<Type*>& param_types)
         : return_type(return_type), params(param_types), Type(0) {}
