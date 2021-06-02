@@ -5,6 +5,7 @@
 
 thread_local static int indent = 0;
 
+Node::~Node() {}
 
 std::ostream& operator<<(std::ostream& o, Node* n) {
     n->print(o, false);
@@ -171,4 +172,15 @@ void FunctionType::print(std::ostream& o, bool print_definition) {
         o << return_type;
     else 
         o << "void";
+}
+
+
+
+
+void Cast::print(std::ostream& o, bool print_definition) {
+    NOT_IMPLEMENTED();
+}
+
+Type* Cast::get_type() {
+    NOT_IMPLEMENTED();
 }

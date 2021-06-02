@@ -12,9 +12,19 @@ struct Node {
 
     virtual bool forward_declare_pass(Scope* scope);
 
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope);
+    virtual Node* resolve_pass(
+        Type* wanted_type,
+        int* friction,
+        Scope* scope
+    );
 
-    virtual int resolve_friction(Type* type, Scope* scope);
+    virtual Node* resolve_pass_cast_wrapper(
+        Type* wanted_type,
+        int* friction,
+        Scope* scope
+    );
 
     Atom as_atom_reference();
+
+    virtual ~Node();
 };

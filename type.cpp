@@ -25,12 +25,27 @@ FunctionType* get(Type* return_type, const std::vector<Type*>& param_types) {
 
 
 
+Node* Node::resolve_pass_cast_wrapper(Type* wanted_type, int* friction, Scope* scope) {
+    Node* new_node = resolve_pass(wanted_type, friction, scope);
+    if (new_node && new_node->get_type() == wanted_type)
+        return new_node;
 
-bool Node::resolve_pass(Node**, Type*, Scope*) { 
-    return true; 
+    for (Scope* s = scope; s != nullptr; s = s->parent) {
+        for (Cast* cast : s->casts) {
+            if (cast->destination_type == wanted_type && cast->source_type == get_type())
+                return cast->get_node(this);
+        }
+    }
+    return nullptr;
 }
 
-bool Function::resolve_pass(Node** my_location, Type* type, Scope* scope) { 
+Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
+    if (!wanted_type || wanted_type != get_type())
+        return nullptr;
+    return this; 
+}
+
+Node* Function::resolve_pass(Type*, int*, Scope* scope) {
     // for (int i = 0; i < param_types.size(); i++) {
         // FIXME more strict checks on the form of the parameters
         // MUST (params[i]->resolve_pass(&params[i], body));
@@ -39,42 +54,40 @@ bool Function::resolve_pass(Node** my_location, Type* type, Scope* scope) {
     return body->resolve_pass(nullptr, nullptr, scope);
 }
 
-bool Scope::resolve_pass(Node**, Type*, Scope* scope) {
-    for (int i = 0; i < statements.size(); i++)
-        MUST (statements[i]->resolve_pass(&statements[i], nullptr, this));
-    return true;
+Node* Scope::resolve_pass(Type*, int*, Scope* scope) {
+    for (Node*& stmt : statements)
+        MUST (stmt = stmt->resolve_pass(nullptr, nullptr, this));
+    return this;
 }
 
-bool Call::resolve_pass(Node** my_location, Type* wanted_type, Scope* scope) { 
-    if (tried_resolved)
-        return resolved;
+Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
+    if (tried_resolved) {
+        if (!resolved || (wanted_type && wanted_type != get_type()))
+            return nullptr;
+        return this;
+    }
     tried_resolved = true;
+
     Atom fn_atom = fn->as_atom_reference();
 
     if (fn_atom == ':') {
-        assert(my_location);
-
         Atom identifier = args[0]->as_atom_reference();
         if (!identifier) {
             add_error(new InvalidDeclarationError(this));
-            return false;
+            return nullptr;
         }
 
         Type* type = dynamic_cast<Type*>(args[1]);
         if (!type) {
             add_error(new InvalidDeclarationError(this));
-            return false;
+            return nullptr;
         }
 
-        Variable* var = scope->define_variable(identifier, type);
-        MUST (var);
-
-        *my_location = var;
-        delete this;
+        return scope->define_variable(identifier, type);
     } else {
         if (!fn_atom) {
             add_error(new InvalidCallError(this));
-            return false;
+            return nullptr;
         }
 
         std::vector<Function*> possible_overloads;
@@ -84,7 +97,6 @@ bool Call::resolve_pass(Node** my_location, Type* wanted_type, Scope* scope) {
             for (Definition& def : s->definitions) {
                 if (def.key == fn_atom) {
                     Function* possible_fn = dynamic_cast<Function*>(def.value);
-
                     possible_overloads.push_back(possible_fn);
                 }
             }
@@ -92,74 +104,66 @@ bool Call::resolve_pass(Node** my_location, Type* wanted_type, Scope* scope) {
 
         if (possible_overloads.empty()) {
             add_error(new InvalidCallError(this));
-            return false;
+            return nullptr;
         }
 
         int min_friction = INT32_MAX;
+
         Function* best_overload = nullptr;
+        
+        std::vector<Node*> best_overload_args;
+        std::vector<Node*> new_tmp_args(args.size());
 
         for (Function* overload : possible_overloads) {
-            int friction = 0;
-            for (int i = 0; i < args.size(); i++)
-                friction += args[i]->resolve_friction(overload->get_fn_type()->params[i], scope);
-            if (friction < min_friction) {
-                min_friction = friction;
-                best_overload = overload;
+            i32 friction = 0;
+
+            for (int i = 0; i < args.size(); i++) {
+                Node* new_arg = args[i]->resolve_pass_cast_wrapper(overload->get_fn_type()->params[i], &friction, scope);
+                if (!new_arg)
+                    goto NextOverload;
+                new_tmp_args[i] = new_arg;
             }
+
+            if (friction < min_friction) {
+                min_friction  = friction;
+                best_overload = overload;
+                best_overload_args = new_tmp_args;
+            }
+
+NextOverload:;
         }
 
-        if (!best_overload || min_friction >= INFINITE_FRICTION) {
+//         if (best_overload)
+//             for (int i = 0; i < args.size(); i++)
+//                 if (args[i] != best_overload_args[i])
+//                     delete args[i];
+
+        if (!best_overload) {
             add_error(new InvalidCallError(this));
-            return false;
+            return nullptr;
         }
 
         delete (UnresolvedRef*)fn;
         fn = best_overload;
-
-        for (int i = 0; i < args.size(); i++)
-            MUST (args[i]->resolve_pass(&args[i], best_overload->get_fn_type()->params[i], scope));
+        args = best_overload_args;
     }
 
     resolved = true;
-    return true;
-}
 
-int Call::resolve_friction(Type* type, Scope* scope) {
-    if (resolved)
-        return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
-
-    if (!resolve_pass(nullptr, nullptr, scope)) {
-        return INFINITE_FRICTION;
-    }
-
-    return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
+    return (!wanted_type || wanted_type == get_type()) ? this : nullptr;
 }
 
 
 
-
-int Node::resolve_friction(Type* type, Scope* _) {
-    return (type == get_type()) ? 0 : INFINITE_FRICTION; // FIXME cast
-}
-
-int UnresolvedRef::resolve_friction(Type* type, Scope* scope) {
-    return resolve_pass(nullptr, type, scope) ? 0 : INFINITE_FRICTION;
-}
-
-
-
-bool UnresolvedRef::resolve_pass(Node** location, Type* type, Scope* scope) {
+Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
     // assuming we're resolving a variable
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (auto& vardecl: s->variables) {
-            if (vardecl.first == atom && type == vardecl.second->type)  {
-                if (location)
-                    *location =vardecl.second;
-                return true;
-            }
+            if (vardecl.first == atom && type == vardecl.second->type)
+                return vardecl.second;
         }
     }
-    return false;
+    return nullptr;
 }
 
 

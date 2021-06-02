@@ -37,6 +37,7 @@ static char* readfile(const char* file) {
 
 int main(int argc, const char** argv) {
     global = new Scope(nullptr);
+    global->casts.push_back(new NumberLiteralToPrimitiveCast(&t_u16));
 
     char* f = readfile("test.kodo");
     if (!f) {

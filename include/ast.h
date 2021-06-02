@@ -19,6 +19,7 @@ struct FunctionType;
 #include <Type.h>
 #include <NumberLiteral.h>
 
+
 struct Function : Node {
     Atom name = 0;
     Scope* body;
@@ -29,7 +30,7 @@ struct Function : Node {
     FunctionType* get_fn_type();
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
+    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
 };
 
 struct UnresolvedRef : Node {
@@ -39,8 +40,7 @@ struct UnresolvedRef : Node {
 
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
-    virtual int resolve_friction(Type* type, Scope* scope) override;
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
+    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
 };
 
 struct Call : Node {
@@ -56,8 +56,7 @@ struct Call : Node {
 
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
-    virtual int resolve_friction(Type* type, Scope* scope) override;
+    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
     Node* rotate();
 };
 
@@ -77,12 +76,14 @@ struct Scope : Node {
     std::vector<Node*> statements;
     std::vector<Definition> definitions;
     std::unordered_map<atom_t, Variable*> variables;
+    std::vector<Cast*> casts;
+
 
     bool define(Atom key, Node* value);
     Variable* define_variable(Atom key, Type* type);
 
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual bool resolve_pass(Node** my_location, Type* type, Scope* scope) override;
+    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
 };
 
 struct Variable : Node {

@@ -1,3 +1,4 @@
+#include <ast.h>
 #include <NumberLiteral.h>
 #include <iostream>
 
@@ -25,12 +26,12 @@ void NumberLiteral::print(std::ostream& o, bool print_definition) {
 }
 
 void CastedNumberLiteral::print(std::ostream& o, bool print_definition) {
-    o << number;
+    o << number << type;
 }
 
-NumberLiteralToPrimitiveCast::NumberLiteralToPrimitiveCast(Type* _source_type) {
-    this->source_type = _source_type;
-    this->destination_type = &t_number_literal;
+NumberLiteralToPrimitiveCast::NumberLiteralToPrimitiveCast(Type* _destination_type) {
+    this->destination_type = _destination_type;
+    this->source_type = &t_number_literal;
 }
 
 
@@ -42,7 +43,7 @@ Node* NumberLiteralToPrimitiveCast::get_node(Node* source) {
     casted->type = destination_type;
     casted->number = 0;
 
-    for (int i = 0; i < nl->digits.size(); nl++) {
+    for (int i = 0; i < nl->digits.size(); i++) {
         casted->number *= 10;
         casted->number += nl->digits[i];
     }
