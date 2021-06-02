@@ -166,7 +166,6 @@ bool UnresolvedRef::resolve_pass(Node** location, Type* type, Scope* scope) {
 
 
 Type* Type::get_type()          { return &t_type; }
-Type* NumberLiteral::get_type() { return &t_number_literal; }
 
 Type* Function::get_type()      { return type; }
 FunctionType* Function::get_fn_type() { return type; }

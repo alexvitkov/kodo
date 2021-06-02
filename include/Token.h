@@ -31,6 +31,7 @@ enum TokenType : atom_t {
     TOK_PLUSPLUS,
     TOK_MINUSMINUS,
 
+    TOK_CAST,
 
     // TOK_IDENTIFIER = 128,
     // TOK_NUMBER_LITERAL = 129,

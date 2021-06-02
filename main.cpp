@@ -5,8 +5,6 @@
 
 #include <iostream>
 
-char script[] = "fn foo() { };";
-
 static Scope* global;
 
 
