@@ -11,14 +11,9 @@
 #include <Node/Cast.h>
 
 
-thread_local static int indent = 0;
 
 Node::~Node() {}
 
-std::ostream& operator<<(std::ostream& o, Node* n) {
-    n->print(o, false);
-    return o;
-}
 
 
 Atom Node::as_atom_reference() {
@@ -32,47 +27,11 @@ Atom Node::as_atom_reference() {
 
 
 
-void Function::print(std::ostream& o, bool print_definition) {
-    if (print_definition || !name) {
-        o << "fn ";
-        if (name)
-            o << name;
-        o << '(';
-        for (int i = 0; i < type->params.size(); i++) {
-            o << param_names[i] << ": " << type->params[i];
-            if (i != type->params.size() - 1)
-                o << ", ";
-        }
-        o << ") " << body;
-    } else
-        o << "\u001b[35m" << name << "\u001b[0m";
-}
 
 
 
-void UnresolvedRef::print(std::ostream& o, bool print_definition) {
-    o << "\u001b[31m" << atom << "\u001b[0m";
-}
 
 
-static void print_indent(std::ostream& o) {
-    for (int i =0 ; i < indent; i++)
-        o << "    ";
-}
-
-
-void Scope::print(std::ostream& o, bool print_definition) {
-    o << "{\n";
-    indent ++;
-    for (auto& stmt : statements) {
-        print_indent(o);
-        stmt->print(o, true);
-        o << ";\n";
-    }
-    indent --;
-    print_indent(o);
-    o << "}";
-};
 
 bool Scope::define_function(Atom key, Function* value) {
     for (const Definition& def : definitions) {
@@ -103,54 +62,8 @@ Variable* Scope::define_variable(Atom key, Type* type, Node* source_node) {
     return var;
 }
 
-void Variable::print(std::ostream& o, bool print_definition) {
-    if (print_definition)
-        o << name << ": " << type;
-    else
-        o << "\u001b[35m" << name << "\u001b[0m";
-}
-
-#define ALWAYS_BRACKETS
 
 
-
-
-void Call::print(std::ostream& o, bool print_definition) {
-    UnresolvedRef* _fn = dynamic_cast<UnresolvedRef*>(fn);
-    if (_fn) {
-        Atom atom = _fn->atom;
-
-        if (atom.is_infix_operator()) {
-
-#ifdef ALWAYS_BRACKETS
-            o << '(' << args[0] << ' ' << fn << ' ' << args[1] << ')';
-#else
-            o << args[0] << " " << fn << " ";
-
-            AST_Call* rhs_call = dynamic_cast<AST_Call*>(args[1]);
-            if (rhs_call) {
-                AST_Reference* rhs_fn = dynamic_cast<AST_Reference*>(rhs_call->fn);
-                Atom rhs_atom = rhs_fn->atom;
-
-                if (rhs_call && rhs_atom.is_infix_operator() && rhs_atom.precedence() < atom.precedence())
-                    o << "(" << args[1] << ")";
-                return;
-            }
-            o << args[1];
-#endif
-
-            return;
-        } 
-    }
-
-    o << fn << "(";
-    for (int i = 0; i < args.size(); i++) {
-        o << args[i];
-        if (i != args.size() - 1)
-            o << ", ";
-    }
-    o << ")";
-}
 
 Node* Call::rotate() {
     UnresolvedRef* _fn = dynamic_cast<UnresolvedRef*>(fn);
@@ -180,43 +93,6 @@ Node* Call::rotate() {
 
 
 
-
-void Type::print(std::ostream& o, bool print_definition) {
-    o << "\u001b[34m" << atom << "\u001b[0m";
-}
-
-
-
-void FunctionType::print(std::ostream& o, bool print_definition) {
-    o << "(";
-    for (Type* t : params)
-        o << t << ", ";
-    o << ") -> ";
-
-    if (return_type)
-        o << return_type;
-    else 
-        o << "void";
-}
-
-
-
-
-void Cast::print(std::ostream& o, bool print_definition) {
-    NOT_IMPLEMENTED();
-}
-
-Type* Cast::get_type() {
-    NOT_IMPLEMENTED();
-}
-
-
-
-
-bool Node::forward_declare_pass(Scope* scope) { 
-    return true; 
-}
-
 bool Function::forward_declare_pass(Scope* scope) { 
     if (name)
         MUST (scope->define_function(name, this));
@@ -224,6 +100,13 @@ bool Function::forward_declare_pass(Scope* scope) {
     MUST (body->forward_declare_pass(scope));
     return true;
 }
+
+
+
+bool Node::forward_declare_pass(Scope* scope) { 
+    return true; 
+}
+
 
 bool Scope::forward_declare_pass(Scope* scope) {
     for (Node* n : statements)

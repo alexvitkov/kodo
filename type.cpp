@@ -152,7 +152,7 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             i32 friction = 0;
 
             for (int i = 0; i < args.size(); i++) {
-                Node* new_arg = args[i]->resolve_pass_cast_wrapper(overload->get_fn_type()->params[i], &friction, scope);
+                Node* new_arg = args[i]->resolve_pass_cast_wrapper(overload->type->params[i], &friction, scope);
                 if (!new_arg)
                     goto NextOverload;
                 new_tmp_args[i] = new_arg;
@@ -202,20 +202,16 @@ Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
 
 
 
-
+Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
 Type* Type::get_type()          { return &t_type; }
-
 Type* Function::get_type()      { return type; }
-FunctionType* Function::get_fn_type() { return type; }
 Type* Variable::get_type()      { return type; }
-
 Type* UnresolvedRef::get_type() { return nullptr; }
-
 Type* Scope::get_type()         { return nullptr; }
 
 Type* Call::get_type() {
     if (resolved)
-        return ((Function*)fn)->get_fn_type()->return_type;
+        return ((Function*)fn)->type->return_type;
     return nullptr;
 }
 
