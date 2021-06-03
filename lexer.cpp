@@ -172,6 +172,14 @@ bool InputFile::lex() {
 
         u8 ct = char_traits[*c];
 
+        if (c[0] == '/' && c[1] == '/') {
+            c += 2;
+            do {
+                c++;
+            } while (*c != '\n' && *c != '\0');
+            goto Next;
+        }
+
         if (ct & (CT_LETTER | CT_DIGIT)) {
             if (!word_start) {
                 word_start = c;
