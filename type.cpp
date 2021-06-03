@@ -215,7 +215,11 @@ bool IfStatement::forward_declare_pass(Scope* scope) {
 }
 
 Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
-    condition = condition->resolve_pass(nullptr, 0, root_scope);
+
+    Node* _condition = condition->resolve_pass(nullptr, 0, root_scope);
+    MUST (_condition);
+    condition = _condition;
+
     MUST (then_block->resolve_pass(nullptr, nullptr, root_scope));
     if (else_block)
         MUST (else_block->resolve_pass(nullptr, nullptr, root_scope));

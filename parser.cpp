@@ -108,7 +108,7 @@ Scope* parse_block();
 // but the closing brackets won't be condumed.
 //
 // rotate_tree is a helper argument that should always be true when calling a top-level parse_expression
-Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true);
+Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true, bool brackets = false);
 
 
 
@@ -199,7 +199,7 @@ IfStatement* parse_if() {
     Scope* old_current = current_context;
     current_context = ifs->root_scope;
 
-    MUST (ifs->condition = parse_expression(')', 0)); // this pops the closing bracket
+    MUST (ifs->condition = parse_expression(')', 0, true)); // this pops the closing bracket
     MUST (ifs->then_block = parse_block());
 
     if (ts.peek() == TOK_ELSE) {
@@ -212,7 +212,7 @@ IfStatement* parse_if() {
     return ifs;
 }
 
-Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree) {
+Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree, bool brackets) {
     Node* buildup = nullptr;
 
     while (true) {
@@ -244,7 +244,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 Call* new_call = new Call(buildup);
 
                 while (ts.peek() != ')') {
-                    Node* arg = parse_expression(',', ')');
+                    Node* arg = parse_expression(',', ')', false, true);
                     MUST (arg);
                     new_call->args.push_back(arg);
                 }
@@ -315,7 +315,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 return nullptr;
 
             Call* call = new Call(tok, buildup, rhs);
-            call->brackets = hard_delimiter == ')';
+            call->brackets = brackets;
 
             return rotate_tree ? call->rotate() : call;
         }

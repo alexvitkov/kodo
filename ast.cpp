@@ -14,21 +14,12 @@
 
 Node::~Node() {}
 
-
-
 Atom Node::as_atom_reference() {
     UnresolvedRef* ref;
     if ((ref = dynamic_cast<UnresolvedRef*>(this)))
         return ref->atom;
     return 0;
 }
-
-
-
-
-
-
-
 
 
 
