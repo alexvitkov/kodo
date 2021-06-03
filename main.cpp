@@ -19,19 +19,24 @@ int main(int argc, const char** argv) {
     if (!f)
         return 1;
 
-    if (!f->lex())
-        return 1;
+    if (!f->lex()) {
+        std::cout << "lex() failed\n";
+    } else if (!f->parse()) {
+        std::cout << "parse() failed\n";
+    } else if (!global->scope->forward_declare_pass(nullptr)) {
+        std::cout << "forward_declare_pass() failed\n";
+    } else if (!global->scope->resolve_pass(nullptr, nullptr, nullptr)) {
+        std::cout << "resolve_pass() failed\n";
+    } else {
+        std::cout << global->scope << "\n\n\n";
+        return 0;
+    }
 
-    if (!f->parse())
-        return 1;
+    std::cout << "\n";
+    for (Error* err : global->errors) {
+        err->print();
+        std::cout << "\n\n";
+    }
 
-    if (!global->scope->forward_declare_pass(nullptr))
-        return 1;
-
-    if (!global->scope->resolve_pass(nullptr, nullptr, nullptr))
-        return 1;
-
-
-    std::cout << global << "\n\n\n";
     return 0;
 }

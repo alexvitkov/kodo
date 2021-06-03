@@ -8,7 +8,6 @@
 #include <Node/NumberLiteral.h>
 #include <Node/IfStatement.h>
 
-//#define DEBUG_TOKENS
 
 struct TokenStream {
     const std::vector<Token>* tokens;
@@ -118,6 +117,7 @@ thread_local bool bracket;
 
 
 
+
 bool InputFile::parse() {
     current_context = global->scope;
     ts.tokens = &tokens;
@@ -137,8 +137,17 @@ bool parse(Atom delimiter) {
         // parse expression, delimtiter is either ; or 'delimiter'
         // the ; will be consumed, 'delimiter' will not.
         Node* expr = parse_expression(';', delimiter);
-        if (!expr) 
+
+        if (!expr) {
+            // TODO make this not suck
+            // it's a dirty dirty hack but to allow for empty expressions
+            // we check the number of errors emited so far:
+            // if there are no errors and nullptr is returned, it's an empty expression
+            if (global->errors.size() == 0)
+                continue;
+
             return false;
+        }
 
         current_context->statements.push_back(expr);
     }
@@ -158,7 +167,7 @@ Function* parse_fn() {
 
     MUST (ts.expect('('));
 
-    // FIXME MAYBE fn foo(x: int, ) is currently allowed
+    // FIXME fn foo(x: int, ) is currently allowed
     while (ts.peek() != ')') {
 
         MUST (tok = ts.expect_id());
@@ -224,13 +233,13 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
             continue;
         }
 
-        if (hard_delimiter && tok == hard_delimiter)
+        if (hard_delimiter && tok == hard_delimiter) {
             return buildup;
+        }
 
         if (soft_delimiter && tok == soft_delimiter) {
             ts.rewind();
             return buildup;
-
         }
 
         if (tok == '{') {

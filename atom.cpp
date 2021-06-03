@@ -120,7 +120,7 @@ bool Atom::is_identifier() {
 
 bool Atom::is_infix_operator() { 
     return atom == 
-        '+' || atom == '-' || atom == '*' || atom == '/' || atom == '%' || atom == '='; 
+        '+' || atom == '-' || atom == '*' || atom == '/' || atom == '%' || atom == '=' || atom == ':'; 
 }
 
 int Atom::precedence() {

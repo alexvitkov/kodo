@@ -1,11 +1,19 @@
 #include <iostream>
+#include <iomanip>
 #include <dirent.h>
 
 #include <Node.h>
 #include <common.h>
 #include <GlobalContext.h>
 
-const std::string parser_tests = "test/parser_tree_compare";
+
+#include <sys/ioctl.h>
+#include <stdio.h>
+#include <unistd.h>
+
+
+const std::string tree_compare_tests = "test/parser_tree_compare";
+const std::string must_parse_tests = "test/must_parse";
 
 
 struct Test {
@@ -23,6 +31,7 @@ std::vector<Test*> tests;
 Test* current_test;
 GlobalContext* global;
 
+int terminal_width;
 
 void begin_test(std::string name) {
     current_test = new Test();
@@ -33,7 +42,9 @@ void begin_test(std::string name) {
 
     tests.push_back(current_test);
 
-    std::cout << name << "... ";
+    
+
+    std::cout << std::left << std::setw(terminal_width - 6) << name;
 }
 
 void fail_test() {
@@ -47,12 +58,13 @@ void pass_test() {
 }
 
 
-void run_tree_compare_tests() {
-    DIR* d = opendir(parser_tests.c_str());
+template <typename Fn>
+void run_test_in_directory(std::string dir, Fn fn) {
+    DIR* d = opendir(dir.c_str());
     dirent* ent;
 
     if (!d) {
-        std::cout << "Failed to open directory '" << parser_tests << "'. These tests will not be run\n";
+        std::cout << "Failed to open directory '" << tree_compare_tests << "'. These tests will not be run\n";
         return;
     }
 
@@ -63,7 +75,7 @@ void run_tree_compare_tests() {
         GlobalContext _global;
         global = &_global;
 
-        std::string filename = parser_tests + "/" + ent->d_name;
+        std::string filename = dir + "/" + ent->d_name;
         std::string test_name = filename;
         begin_test(test_name);
 
@@ -72,42 +84,47 @@ void run_tree_compare_tests() {
             fail_test();
             continue;
         }
-        if (!input->lex()) {
-            fail_test();
-            continue;
-        }
-        if (!input->parse()) {
-            fail_test();
-            continue;
-        }
 
-        if (global->scope->statements.size() != 2) {
+        if (!fn(input)) {
             fail_test();
-            continue;
+        } else {
+            pass_test();
         }
-
-        Scope* s1 = dynamic_cast<Scope*>(global->scope->statements[0]);
-        Scope* s2 = dynamic_cast<Scope*>(global->scope->statements[1]);
-
-        if (!s1 || !s2) {
-            fail_test();
-            continue;
-        }
-
-        if (!s1->tree_compare(s2)) {
-            fail_test();
-            continue;
-        }
-
-        pass_test();
     }
 
     closedir(d);
 }
 
 
+bool run_tree_compare_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+
+    MUST (global->scope->statements.size() == 2);
+
+    Scope* s1 = dynamic_cast<Scope*>(global->scope->statements[0]);
+    Scope* s2 = dynamic_cast<Scope*>(global->scope->statements[1]);
+
+    MUST (s1 && s2);
+    MUST (s1->tree_compare(s2));
+
+    return true;
+}
+
+bool run_must_parse_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+    return true;
+}
+
 int main() {
-    run_tree_compare_tests();
+    winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+    terminal_width = w.ws_col;
+
+
+    run_test_in_directory(tree_compare_tests, run_tree_compare_test);
+    run_test_in_directory(must_parse_tests, run_must_parse_test);
 
     std::cout << "\n";
 
