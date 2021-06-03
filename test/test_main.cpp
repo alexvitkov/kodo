@@ -16,6 +16,7 @@ const std::string tree_compare_tests = "test/parser_tree_compare";
 const std::string must_parse_tests = "test/must_parse";
 const std::string must_resolve_tests = "test/must_resolve";
 const std::string must_not_resolve_tests = "test/must_not_resolve";
+const std::string must_not_parse_tests = "test/must_not_parse";
 
 
 struct Test {
@@ -119,6 +120,12 @@ bool run_must_parse_test(InputFile* input) {
     return true;
 }
 
+bool run_must_not_parse_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (!input->parse());
+    return true;
+}
+
 bool run_must_resolve_test(InputFile* input) {
     MUST (input->lex());
     MUST (input->parse());
@@ -146,6 +153,7 @@ int main() {
     run_test_in_directory(must_parse_tests, run_must_parse_test);
     run_test_in_directory(must_resolve_tests, run_must_resolve_test);
     run_test_in_directory(must_not_resolve_tests, run_must_not_resolve_test);
+    run_test_in_directory(must_not_parse_tests, run_must_not_parse_test);
 
     std::cout << "\n";
 
