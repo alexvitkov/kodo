@@ -198,7 +198,7 @@ Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
     // assuming we're resolving a variable
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (auto& vardecl: s->variables) {
-            if (vardecl.first == atom && type == vardecl.second->type)
+            if (vardecl.first == atom && (!type || type == vardecl.second->type))
                 return vardecl.second;
         }
     }

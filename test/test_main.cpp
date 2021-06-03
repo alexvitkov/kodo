@@ -14,6 +14,8 @@
 
 const std::string tree_compare_tests = "test/parser_tree_compare";
 const std::string must_parse_tests = "test/must_parse";
+const std::string must_resolve_tests = "test/must_resolve";
+const std::string must_not_resolve_tests = "test/must_not_resolve";
 
 
 struct Test {
@@ -117,6 +119,22 @@ bool run_must_parse_test(InputFile* input) {
     return true;
 }
 
+bool run_must_resolve_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+    MUST (global->scope->forward_declare_pass(nullptr));
+    MUST (global->scope->resolve_pass(nullptr, nullptr, nullptr));
+    return true;
+}
+
+bool run_must_not_resolve_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+    MUST (global->scope->forward_declare_pass(nullptr));
+    MUST (!global->scope->resolve_pass(nullptr, nullptr, nullptr));
+    return true;
+}
+
 int main() {
     winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
@@ -125,6 +143,9 @@ int main() {
 
     run_test_in_directory(tree_compare_tests, run_tree_compare_test);
     run_test_in_directory(must_parse_tests, run_must_parse_test);
+    run_test_in_directory(must_parse_tests, run_must_parse_test);
+    run_test_in_directory(must_resolve_tests, run_must_resolve_test);
+    run_test_in_directory(must_not_resolve_tests, run_must_not_resolve_test);
 
     std::cout << "\n";
 
