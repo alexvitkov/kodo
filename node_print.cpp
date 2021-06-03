@@ -122,7 +122,7 @@ void Cast::print(std::ostream& o, bool print_definition) {
 }
 
 void IfStatement::print(std::ostream& o, bool print_definition) {
-    o << "if (" << condition << ")" << then_block;
+    o << "if (" << condition << ") " << then_block;
     if (else_block)
         o << " else " << else_block;
 }

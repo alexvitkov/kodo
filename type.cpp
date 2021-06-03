@@ -205,7 +205,22 @@ Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
     return nullptr;
 }
 
+bool IfStatement::forward_declare_pass(Scope* scope) {
+    MUST (root_scope->forward_declare_pass(scope));
+    MUST (condition->forward_declare_pass(root_scope)); // is this needed?
+    MUST (then_block->forward_declare_pass(scope));
+    if (else_block)
+        MUST (else_block->forward_declare_pass(scope));
+    return true;
+}
 
+Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
+    condition = condition->resolve_pass(nullptr, 0, root_scope);
+    MUST (then_block->resolve_pass(nullptr, nullptr, root_scope));
+    if (else_block)
+        MUST (else_block->resolve_pass(nullptr, nullptr, root_scope));
+    return this;
+}
 
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
 Type* IfStatement::get_type()   { NOT_IMPLEMENTED(); }
@@ -220,4 +235,6 @@ Type* Call::get_type() {
         return ((Function*)fn)->type->return_type;
     return nullptr;
 }
+
+
 

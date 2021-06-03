@@ -15,4 +15,7 @@ struct IfStatement : Node {
     inline IfStatement(Scope* parent) {
         root_scope = new Scope(parent);
     }
+
+    virtual bool forward_declare_pass(Scope* scope) override;
+    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
 };
