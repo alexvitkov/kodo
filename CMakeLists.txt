@@ -14,10 +14,7 @@ else()
 endif()
 
 
-
-
-add_executable(kodo
-    main.cpp
+set(SOURCES
     InputFile.cpp
     error.cpp
     atom.cpp
@@ -30,8 +27,19 @@ add_executable(kodo
     NumberLiteral.cpp
     keywords.gperf.gen.inc)
 
-target_include_directories(kodo PRIVATE include)
-set_property(TARGET kodo PROPERTY CXX_STANDARD 20)
+
+add_executable(kodo
+    main.cpp
+    ${SOURCES})
+
+add_executable(kodo_test
+    test/test_main.cpp
+    ${SOURCES})
+
+target_include_directories(kodo      PRIVATE include)
+target_include_directories(kodo_test PRIVATE include)
+set_property(TARGET kodo      PROPERTY CXX_STANDARD 20)
+set_property(TARGET kodo_test PROPERTY CXX_STANDARD 20)
 
 find_package(Threads REQUIRED)
 target_link_libraries(kodo Threads::Threads)
