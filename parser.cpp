@@ -1,9 +1,7 @@
-#include <Type.h>
 #include <common.h>
-#include <parser.h>
+#include <Type.h>
 #include <Error.h>
-
-
+#include <GlobalContext.h>
 #include <Node/Scope.h>
 #include <Node/Function.h>
 #include <Node/Call.h>
@@ -112,7 +110,6 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
 
 
 
-static thread_local Scope* global;
 thread_local Scope* current_context;
 thread_local TokenStream ts;
 thread_local Scope* block;
@@ -121,11 +118,11 @@ thread_local bool bracket;
 
 
 
-bool parse(Scope* _global, InputFile* input) {
-    global = _global;
-    current_context = global;
-    ts.tokens = &input->tokens;
-    return parse(0); // we pass 0 (EOF) as delimiter, parse until end of file
+bool InputFile::parse() {
+    current_context = global->scope;
+    ts.tokens = &tokens;
+    ts.position = 0;
+    return ::parse(0); // we pass 0 (EOF) as delimiter, parse until end of file
 }
 
 // delimiter will be consumed
@@ -233,7 +230,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
         if (soft_delimiter && tok == soft_delimiter) {
             ts.rewind();
             return buildup;
+
         }
+
+        if (tok == '{') {
+            ts.rewind();
+            buildup = parse_block();
+            continue;
+        }
+
 
         if (tok == '(') {
             if (buildup == nullptr) {
@@ -253,8 +258,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 buildup = new_call;
                 continue;
             }
-        }
-
+        } 
 
         if (tok.is_identifier()) {
             if (buildup) {

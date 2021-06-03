@@ -24,6 +24,11 @@ struct Node {
         Scope* scope
     );
 
+    // this method is used by the parser tests to check if
+    // two nodes have the same structure
+    // TODO this should only be in the test build
+    virtual bool tree_compare(Node* other);
+
     Atom as_atom_reference();
 
     virtual ~Node();

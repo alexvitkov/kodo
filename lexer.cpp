@@ -1,11 +1,10 @@
-#include <lexer.h>
-#include <Error.h>
 #include <iostream>
 #include <vector>
 #include <string.h>
 
+#include <GlobalContext.h>
+#include <Error.h>
 #include <Node/NumberLiteral.h>
-#include <InputFile.h>
 
 #define register
 #include "keywords.gperf.gen.inc"
@@ -160,12 +159,12 @@ void emit(InputFile* input, NumberLiteral* nl) {
 
 
 // buffer must be zero-terminated
-bool lex(InputFile* input) {
+bool InputFile::lex() {
     char* word_start = nullptr;
     u8 word_type = 0; // CT_LETTER or CT_DIGIT
     NumberLiteral* writing_literal = nullptr;
 
-    for (char* c = input->buffer;; c++) {
+    for (char* c = buffer;; c++) {
         if (*c < 0) {
             add_error(new UnsupportedCharacterError(*c));
             return false;
@@ -196,9 +195,9 @@ bool lex(InputFile* input) {
         } else if (word_start) {
             if (word_type == CT_LETTER) {
                 Atom atom = string_to_atom(word_start, c - word_start);
-                emit(input, atom);
+                emit(this, atom);
             } else {
-                emit(input, writing_literal);
+                emit(this, writing_literal);
             }
             word_start = nullptr;
         }
@@ -209,14 +208,14 @@ bool lex(InputFile* input) {
                 tok* t = in_word_set(c, i);
                 if (t) {
                     c += i - 1;
-                    emit(input, t->atom);
+                    emit(this, t->atom);
                     goto Next;
                 }
             }
         }
 
         if (ct & CT_OPERATOR) {
-            emit(input, *c);
+            emit(this, *c);
             continue;
         }
 

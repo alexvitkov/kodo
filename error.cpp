@@ -2,18 +2,18 @@
 #include <vector>
 #include <mutex>
 
+#include <GlobalContext.h>
 #include <Error.h>
 #include <Node.h>
 #include <Node/Call.h>
 
-std::vector<Error*> errors;
 std::mutex errors_mutex;
 
 void add_error(Error* err) {
     std::unique_lock<std::mutex> _lock(errors_mutex);
-    errors.push_back(err);
-    err->print();
-    std::cout << "\n\n";
+    global->errors.push_back(err);
+    // err->print();
+    // std::cout << "\n\n";
 }
 
 void UnexpectedTokenError::print() {

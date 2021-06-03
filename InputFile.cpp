@@ -1,7 +1,5 @@
-#include <InputFile.h>
+#include <GlobalContext.h>
 #include <Error.h>
-
-std::vector<InputFile*> input_files;
 
 
 
@@ -33,7 +31,7 @@ static char* readfile(const char* file) {
 }
 
 
-InputFile* load_file(std::string path) {
+InputFile* GlobalContext::add_source(std::string path) {
     char* f = readfile(path.c_str());
     if (!f) {
         add_error(new FailedToReadInputFileError(path));

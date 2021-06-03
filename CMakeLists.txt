@@ -21,6 +21,7 @@ set(SOURCES
     ast.cpp
     Scope.cpp
     node_print.cpp
+    node_tree_compare.cpp
     type.cpp
     lexer.cpp
     parser.cpp

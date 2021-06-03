@@ -1,38 +1,34 @@
-#include <lexer.h>
-#include <parser.h>
-
-#include <InputFile.h>
+#include <GlobalContext.h>
 #include <Type.h>
 #include <Node/Scope.h>
 #include <Node/Cast.h>
 
 #include <iostream>
 
-static Scope* global;
 
 
 
+GlobalContext* global;
 
 
 
 int main(int argc, const char** argv) {
-    global = new Scope(nullptr);
-    global->casts.push_back(new NumberLiteralToPrimitiveCast(&t_u16));
+    global = new GlobalContext();
 
-    InputFile* f = load_file("test.kodo");
+    InputFile* f = global->add_source("test.kodo");
     if (!f)
         return 1;
 
-    if (!lex(f))
+    if (!f->lex())
         return 1;
 
-    if (!parse(global, f))
+    if (!f->parse())
         return 1;
 
-    if (!global->forward_declare_pass(nullptr))
+    if (!global->scope->forward_declare_pass(nullptr))
         return 1;
 
-    if (!global->resolve_pass(nullptr, nullptr, nullptr))
+    if (!global->scope->resolve_pass(nullptr, nullptr, nullptr))
         return 1;
 
 
