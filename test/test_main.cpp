@@ -161,7 +161,11 @@ int main() {
     for (Test* t : tests) {
         if (t->state != Test::PASSED) {
             failed_tests++;
-            std::cout << t->name << " errors:\n";
+
+            std::cout << t->name << " failed.";
+
+            if (!t->global->errors.empty())
+                std::cout << "Errors: ";
             for (Error* err : t->global->errors) {
                 err->print();
                 std::cout << "\n";
