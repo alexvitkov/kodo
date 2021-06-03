@@ -19,6 +19,7 @@ struct Node {
     );
 
     Node* resolve_pass_cast_wrapper(
+        Node** location,
         Type* wanted_type,
         int* friction,
         Scope* scope

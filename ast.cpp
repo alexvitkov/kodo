@@ -24,38 +24,6 @@ Atom Node::as_atom_reference() {
 
 
 
-bool Scope::define_function(Atom key, Function* value) {
-    for (const Definition& def : definitions) {
-        if (def.key.atom == key.atom && def.value->type->equals(value->type, false)) {
-            add_error(new AlreadyDefinedError({
-                def.value,
-                value
-            }));
-            return false;
-        }
-    }
-    
-    definitions.push_back({ key, value });
-    return true;
-}
-
-Variable* Scope::define_variable(Atom key, Type* type, Node* source_node) {
-    if (variables.contains(key)) {
-        std::vector<Node*> defs {
-            variables[key],
-            source_node,
-        };
-        add_error(new AlreadyDefinedError(defs));
-        return nullptr;
-    }
-    Variable* var = new Variable(key, this, type);
-    variables[key] = var;
-    return var;
-}
-
-
-
-
 Node* Call::rotate() {
     UnresolvedRef* _fn = dynamic_cast<UnresolvedRef*>(fn);
     Atom fn_atom = _fn->atom;
@@ -84,7 +52,7 @@ Node* Call::rotate() {
 
 
 
-bool Function::forward_declare_pass(Scope* scope) { 
+bool AST_Function::forward_declare_pass(Scope* scope) { 
     if (name)
         MUST (scope->define_function(name, this));
 
@@ -92,12 +60,9 @@ bool Function::forward_declare_pass(Scope* scope) {
     return true;
 }
 
-
-
 bool Node::forward_declare_pass(Scope* scope) { 
     return true; 
 }
-
 
 bool Scope::forward_declare_pass(Scope* scope) {
     for (Node* n : statements)

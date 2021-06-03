@@ -40,6 +40,7 @@ struct FunctionTypeHash {
 
 std::unordered_map<FunctionType, FunctionType*, FunctionTypeHash> fn_types;
 
+
 FunctionType* make_function_type_unique(FunctionType& temp) {
     auto it = fn_types.find(temp);
     if (it == fn_types.end()) {
@@ -49,6 +50,11 @@ FunctionType* make_function_type_unique(FunctionType& temp) {
     } else {
         return it->second;
     }
+}
+
+FunctionType* FunctionType::get(Type* return_type, const std::vector<Type*>& param_types) {
+    FunctionType temp(return_type, param_types);
+    return make_function_type_unique(temp);
 }
 
 bool FunctionType::equals(const FunctionType* other, bool compare_return_types) const {
@@ -61,10 +67,14 @@ bool FunctionType::equals(const FunctionType* other, bool compare_return_types) 
 
 
 
-Node* Node::resolve_pass_cast_wrapper(Type* wanted_type, int* friction, Scope* scope) {
+Node* Node::resolve_pass_cast_wrapper(Node** location, Type* wanted_type, int* friction, Scope* scope) {
     Node* new_node = resolve_pass(wanted_type, friction, scope);
-    if (new_node && new_node->get_type() == wanted_type)
+    if (new_node && location) {
+        *location = new_node;
+    }
+    if (new_node && new_node->get_type() == wanted_type) {
         return new_node;
+    }
 
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (Cast* cast : s->casts) {
@@ -81,7 +91,7 @@ Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
     return this; 
 }
 
-Node* Function::resolve_pass(Type*, int*, Scope* scope) {
+Node* AST_Function::resolve_pass(Type*, int*, Scope* scope) {
     for (int i = 0; i < param_names.size(); i++)
         body->define_variable(param_names[i], type->params[i] , nullptr);
 
@@ -157,7 +167,7 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             i32 friction = 0;
 
             for (int i = 0; i < args.size(); i++) {
-                Node* new_arg = args[i]->resolve_pass_cast_wrapper(overload->type->params[i], &friction, scope);
+                Node* new_arg = args[i]->resolve_pass_cast_wrapper(&args[i], overload->type->params[i], &friction, scope);
                 if (!new_arg)
                     goto NextOverload;
                 new_tmp_args[i] = new_arg;
@@ -236,7 +246,7 @@ Type* Scope::get_type()         { return nullptr; }
 
 Type* Call::get_type() {
     if (resolved)
-        return ((Function*)fn)->type->return_type;
+        return ((AST_Function*)fn)->type->return_type;
     return nullptr;
 }
 

@@ -23,6 +23,10 @@ std::ostream& operator<<(std::ostream& o, Node* n) {
 }
 
 void Function::print(std::ostream& o, bool print_definition) {
+    o << name;
+}
+
+void AST_Function::print(std::ostream& o, bool print_definition) {
     if (print_definition || !name) {
         o << "fn ";
         if (name)

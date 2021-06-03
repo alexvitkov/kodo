@@ -27,10 +27,10 @@ struct FunctionType : Type {
     inline FunctionType(Type* return_type, const std::vector<Type*>& param_types)
         : return_type(return_type), params(param_types), Type(0) {}
 
+    static FunctionType* get(Type* return_type, const std::vector<Type*>& param_types);
+
     virtual void print(std::ostream& o, bool print_definition) override;
 };
-
-FunctionType* get(Type* return_type, const std::vector<Type*>& param_types);
 
 extern Type t_i8;
 extern Type t_i16;

@@ -94,7 +94,7 @@ void rewind() {
 
 
 bool parse(Atom end);
-Function* parse_fn();
+AST_Function* parse_fn();
 IfStatement* parse_if();
 Scope* parse_block();
 
@@ -153,10 +153,10 @@ bool parse(Atom delimiter) {
     }
 }
 
-Function* parse_fn() {
+AST_Function* parse_fn() {
     // syntax for functions is "fn [NAME] ( ARGS ) [: RETURNTYPE] BODY
     // the fn keyword has been consumed before calling this function.
-    Function* fn = new Function();
+    AST_Function* fn = new AST_Function();
     fn->type = new FunctionType();
 
     Token tok = ts.peek();
