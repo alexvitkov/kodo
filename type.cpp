@@ -81,10 +81,8 @@ Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
 }
 
 Node* Function::resolve_pass(Type*, int*, Scope* scope) {
-    // for (int i = 0; i < param_types.size(); i++) {
-        // FIXME more strict checks on the form of the parameters
-        // MUST (params[i]->resolve_pass(&params[i], body));
-    // }
+    for (int i = 0; i < param_names.size(); i++)
+        body->define_variable(param_names[i], type->params[i] , nullptr);
 
     FunctionType* _type = make_function_type_unique(*type);
     delete type;
