@@ -5,6 +5,8 @@
 %struct-type
 struct tok { const char* name; atom_t atom; };
 %%
+if, TOK_IF
+else, TOK_ELSE
 fn, TOK_FN
 ++, TOK_PLUSPLUS
 --, TOK_MINUSMINUS

@@ -8,6 +8,7 @@
 #include <Node/Function.h>
 #include <Node/Call.h>
 #include <Node/NumberLiteral.h>
+#include <Node/IfStatement.h>
 
 //#define DEBUG_TOKENS
 
@@ -97,6 +98,7 @@ void rewind() {
 
 bool parse(Atom end);
 Function* parse_fn();
+IfStatement* parse_if();
 Scope* parse_block();
 
 // when hard_delimiter is hit, it is consumed and the expression is returned
@@ -186,6 +188,30 @@ Function* parse_fn() {
     return fn;
 }
 
+IfStatement* parse_if() {
+    // syntax for functions is "if ( EXPR ) THEN_BLOCK [else ELSE_BLOCK]
+    // the if has already been popped
+
+    IfStatement* ifs = new IfStatement(current_context);
+    
+    MUST (ts.expect('('))
+
+    Scope* old_current = current_context;
+    current_context = ifs->root_scope;
+
+    MUST (ifs->condition = parse_expression(')', 0)); // this pops the closing bracket
+    MUST (ifs->then_block = parse_block());
+
+    if (ts.peek() == TOK_ELSE) {
+        ts.pop();
+        MUST (ifs->else_block = parse_block());
+    }
+
+    current_context = old_current;
+
+    return ifs;
+}
+
 Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree) {
     Node* buildup = nullptr;
 
@@ -245,6 +271,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 return nullptr;
             }
             buildup = parse_fn();
+            if (!buildup)
+                return nullptr;
+            continue;
+        } else if (tok == TOK_IF) {
+            if (buildup) {
+                add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
+                return nullptr;
+            }
+            buildup = parse_if();
             if (!buildup)
                 return nullptr;
             continue;

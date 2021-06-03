@@ -5,7 +5,7 @@
 #include <Node/Scope.h>
 #include <Node/Variable.h>
 #include <Node/Cast.h>
-#include <Node/Cast.h>
+#include <Node/IfStatement.h>
 
 #include <iostream>
 
@@ -119,4 +119,10 @@ void FunctionType::print(std::ostream& o, bool print_definition) {
 
 void Cast::print(std::ostream& o, bool print_definition) {
     NOT_IMPLEMENTED();
+}
+
+void IfStatement::print(std::ostream& o, bool print_definition) {
+    o << "if (" << condition << ")" << then_block;
+    if (else_block)
+        o << " else " << else_block;
 }

@@ -7,6 +7,7 @@
 #include <Node/Function.h>
 #include <Node/Call.h>
 #include <Node/Variable.h>
+#include <Node/IfStatement.h>
 
 Type t_i8 (TOK_I8);
 Type t_i16(TOK_I16);
@@ -75,7 +76,7 @@ Node* Node::resolve_pass_cast_wrapper(Type* wanted_type, int* friction, Scope* s
 }
 
 Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
-    if (!wanted_type || wanted_type != get_type())
+    if (wanted_type && wanted_type != get_type())
         return nullptr;
     return this; 
 }
@@ -207,6 +208,7 @@ Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
 
 
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
+Type* IfStatement::get_type()   { NOT_IMPLEMENTED(); }
 Type* Type::get_type()          { return &t_type; }
 Type* Function::get_type()      { return type; }
 Type* Variable::get_type()      { return type; }

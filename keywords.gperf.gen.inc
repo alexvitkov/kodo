@@ -35,7 +35,7 @@
 #line 6 "/home/alex/kodo/keywords.gperf"
 struct tok { const char* name; atom_t atom; };
 
-#define TOTAL_KEYWORDS 13
+#define TOTAL_KEYWORDS 15
 #define MIN_WORD_LENGTH 2
 #define MAX_WORD_LENGTH 14
 #define MIN_HASH_VALUE 2
@@ -58,13 +58,13 @@ hash (register const char *str, register size_t len)
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
-      33, 33, 33, 15, 33, 10, 33, 33, 33,  9,
-      33, 10, 33, 33,  0, 33,  0, 33, 33, 33,
+      33, 33, 33, 15, 33, 10, 33, 33, 33,  3,
+      33, 10, 33, 33,  0, 33, 10, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
-      33, 33,  4, 33, 33,  5, 33, 33, 33, 33,
+      33,  5,  0, 33, 33,  5, 33, 33,  0, 33,
        0, 33, 33, 33, 33, 33,  0,  0, 33, 33,
       33,  0, 33, 33, 33, 33, 33, 33, 33, 33,
       33, 33, 33, 33, 33, 33, 33, 33, 33, 33,
@@ -90,36 +90,40 @@ in_word_set (register const char *str, register size_t len)
   static struct tok wordlist[] =
     {
       {""}, {""},
-#line 15 "/home/alex/kodo/keywords.gperf"
-      {"u8", TOK_U8,},
-#line 18 "/home/alex/kodo/keywords.gperf"
-      {"u64", TOK_U64,},
+#line 10 "/home/alex/kodo/keywords.gperf"
+      {"fn", TOK_FN},
 #line 20 "/home/alex/kodo/keywords.gperf"
+      {"u64", TOK_U64,},
+#line 22 "/home/alex/kodo/keywords.gperf"
       {"type", TOK_TYPE,},
       {""},
-#line 8 "/home/alex/kodo/keywords.gperf"
-      {"fn", TOK_FN},
-#line 11 "/home/alex/kodo/keywords.gperf"
-      {"i8", TOK_I8,},
-#line 14 "/home/alex/kodo/keywords.gperf"
-      {"i64", TOK_I64,},
-      {""}, {""}, {""},
-#line 16 "/home/alex/kodo/keywords.gperf"
+#line 18 "/home/alex/kodo/keywords.gperf"
       {"u16", TOK_U16,},
+#line 8 "/home/alex/kodo/keywords.gperf"
+      {"if", TOK_IF},
+#line 16 "/home/alex/kodo/keywords.gperf"
+      {"i64", TOK_I64,},
+#line 9 "/home/alex/kodo/keywords.gperf"
+      {"else", TOK_ELSE},
+      {""},
+#line 14 "/home/alex/kodo/keywords.gperf"
+      {"i16", TOK_I16,},
 #line 17 "/home/alex/kodo/keywords.gperf"
-      {"u32", TOK_U32,},
+      {"u8", TOK_U8,},
 #line 19 "/home/alex/kodo/keywords.gperf"
+      {"u32", TOK_U32,},
+#line 21 "/home/alex/kodo/keywords.gperf"
       {"number_literal", TOK_NUMBER_LITERAL,},
       {""}, {""},
-#line 12 "/home/alex/kodo/keywords.gperf"
-      {"i16", TOK_I16,},
 #line 13 "/home/alex/kodo/keywords.gperf"
+      {"i8", TOK_I8,},
+#line 15 "/home/alex/kodo/keywords.gperf"
       {"i32", TOK_I32,},
       {""}, {""}, {""},
-#line 10 "/home/alex/kodo/keywords.gperf"
+#line 12 "/home/alex/kodo/keywords.gperf"
       {"--", TOK_MINUSMINUS},
       {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""}, {""},
-#line 9 "/home/alex/kodo/keywords.gperf"
+#line 11 "/home/alex/kodo/keywords.gperf"
       {"++", TOK_PLUSPLUS}
     };
 
