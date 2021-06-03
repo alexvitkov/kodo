@@ -117,9 +117,9 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             return nullptr;
         }
 
-        Type* type = dynamic_cast<Type*>(args[1]);
+        Type* type = (Type*)args[1]->resolve_pass(&t_type, 0, scope);
         if (!type) {
-            add_error(new InvalidDeclarationError(this));
+            add_error(new NotATypeError(args[1]));
             return nullptr;
         }
 

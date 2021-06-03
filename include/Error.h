@@ -53,6 +53,11 @@ struct InvalidTokenError : Error {
     inline InvalidTokenError(std::string tok) : tok(tok) {}
 };
 
+struct NotATypeError : Error {
+    Node* node;
+    virtual void print() override;
+    inline NotATypeError(Node* node) : node(node) {}
+};
 
 enum ErrorAtom : atom_t {
     ERR_ATOM_START = 0xFFFFFF00,

@@ -45,3 +45,7 @@ void AlreadyDefinedError::print() {
     for (Node* d : definitions)
         std::cout << d << "\n";
 }
+
+void NotATypeError::print() {
+    std::cout << "Expected a type, instead got " << node;
+}
