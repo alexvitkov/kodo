@@ -18,6 +18,8 @@ const std::string must_resolve_tests = "test/must_resolve";
 const std::string must_not_resolve_tests = "test/must_not_resolve";
 const std::string must_not_parse_tests = "test/must_not_parse";
 
+bool do_match = false;
+std::string match;
 
 struct Test {
     enum State {
@@ -37,6 +39,8 @@ GlobalContext* global;
 int terminal_width;
 
 void begin_test(std::string name) {
+    global = new GlobalContext();
+
     current_test = new Test();
     current_test->name = name;
     current_test->state = Test::RUNNING;
@@ -67,7 +71,7 @@ void run_test_in_directory(std::string dir, Fn fn) {
     dirent* ent;
 
     if (!d) {
-        std::cout << "Failed to open directory '" << tree_compare_tests << "'. These tests will not be run\n";
+        std::cout << "Failed to open directory '" << dir << "'. These tests will not be run\n";
         return;
     }
 
@@ -75,11 +79,12 @@ void run_test_in_directory(std::string dir, Fn fn) {
         if (ent->d_name[0] == '.')
             continue;
 
-        GlobalContext _global;
-        global = &_global;
-
         std::string filename = dir + "/" + ent->d_name;
         std::string test_name = filename;
+
+        if (do_match && filename.find(match) == std::string::npos)
+            continue;
+
         begin_test(test_name);
 
         InputFile* input = global->add_source(filename);
@@ -137,12 +142,28 @@ bool run_must_resolve_test(InputFile* input) {
 bool run_must_not_resolve_test(InputFile* input) {
     MUST (input->lex());
     MUST (input->parse());
-    MUST (global->scope->forward_declare_pass(nullptr));
-    MUST (!global->scope->resolve_pass(nullptr, nullptr, nullptr));
+
+    if (!global->scope->forward_declare_pass(nullptr))
+        return true;
+    if (!global->scope->resolve_pass(nullptr, nullptr, nullptr))
+        return true;
+
+    return false;
+}
+
+bool run_must_not_forward_declare_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+    MUST (!global->scope->forward_declare_pass(nullptr));
     return true;
 }
 
-int main() {
+int main(int argc, const char** argv) {
+    if (argc > 1) {
+        do_match = true;
+        match = argv[1];
+    }
+
     winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     terminal_width = w.ws_col;
@@ -162,10 +183,10 @@ int main() {
         if (t->state != Test::PASSED) {
             failed_tests++;
 
-            std::cout << t->name << " failed.";
+            std::cout << t->name << " failed. ";
 
             if (!t->global->errors.empty())
-                std::cout << "Errors: ";
+                std::cout << "Errors:\n";
             for (Error* err : t->global->errors) {
                 err->print();
                 std::cout << "\n";
