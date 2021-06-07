@@ -31,6 +31,21 @@ void AST_Function::print(std::ostream& o, bool print_definition) {
         o << "fn ";
         if (name)
             o << name;
+
+        if (!template_params.empty()) {
+            o << '[';
+            for (int i = 0; i < template_params.size(); i++) {
+                o << template_params[i].name;
+                if (template_params[i].type)
+                    o << ": " << template_params[i].type;
+                if (i != template_params.size() - 1)
+                    o << ", ";
+            }
+
+            o << ']';
+        }
+
+
         o << '(';
         for (int i = 0; i < type->params.size(); i++) {
             o << param_names[i] << ": " << type->params[i];

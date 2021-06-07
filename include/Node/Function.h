@@ -11,9 +11,16 @@ struct Function : Node {
     virtual void print(std::ostream& o, bool print_definition) override;
 };
 
+struct TemplateParameter {
+    Atom name;
+    Type* type;
+};
+
 struct AST_Function : Function {
     struct Scope* body;
     std::vector<Atom> param_names;
+
+    std::vector<TemplateParameter> template_params;
 
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual bool forward_declare_pass(Scope* scope) override;

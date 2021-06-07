@@ -154,7 +154,6 @@ bool parse(Atom delimiter) {
 }
 
 AST_Function* parse_fn() {
-    // syntax for functions is "fn [NAME] ( ARGS ) [: RETURNTYPE] BODY
     // the fn keyword has been consumed before calling this function.
     AST_Function* fn = new AST_Function();
     fn->type = new FunctionType();
@@ -164,6 +163,32 @@ AST_Function* parse_fn() {
         ts.pop();
         fn->name = tok;
     }     
+
+    // 
+    if (ts.peek() == '[') {
+        ts.pop();
+
+        while (true) {
+            Token id = ts.expect_id();
+
+            if (ts.peek() == ':') {
+                ts.pop();
+                Node* type = parse_expression(',', ']'); // FIXME make sure this is a valid type
+                MUST (type);
+
+                fn->template_params.push_back({ id, (Type*)type });
+            } else {
+                fn->template_params.push_back({ id, nullptr });
+            }
+
+            if (ts.peek() == ',')
+                ts.pop();
+            else {
+                MUST (ts.expect(']'));
+                break;
+            }
+        }
+    }
 
     MUST (ts.expect('('));
 
