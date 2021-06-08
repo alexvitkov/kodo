@@ -27,46 +27,6 @@ Type* const primitive_numeric_types[8] = {
 };
 
 
-struct FunctionTypeHash {
-    size_t operator() (const FunctionType& ft) const {
-        size_t p = (size_t)ft.return_type;
-        for (Node* n : ft.params) {
-            p <<= 1;
-            p ^= (size_t)n;
-        }
-        return p;
-    }
-};
-
-std::unordered_map<FunctionType, FunctionType*, FunctionTypeHash> fn_types;
-
-
-FunctionType* make_function_type_unique(FunctionType& temp) {
-    auto it = fn_types.find(temp);
-    if (it == fn_types.end()) {
-        FunctionType* ft = new FunctionType(temp);
-        fn_types[temp] = ft;
-        return ft;
-    } else {
-        return it->second;
-    }
-}
-
-FunctionType* FunctionType::get(Type* return_type, const std::vector<Type*>& param_types) {
-    FunctionType temp(return_type, param_types);
-    return make_function_type_unique(temp);
-}
-
-bool FunctionType::equals(const FunctionType* other, bool compare_return_types) const {
-    MUST (params == other->params);
-    if (compare_return_types)
-        MUST (return_type == other->return_type);
-    return true;
-}
-
-
-
-
 Node* Node::resolve_pass_cast_wrapper(Node** location, Type* wanted_type, int* friction, Scope* scope) {
     Node* new_node = resolve_pass(wanted_type, friction, scope);
     if (new_node && location) {
@@ -89,18 +49,6 @@ Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
     if (wanted_type && wanted_type != get_type())
         return nullptr;
     return this; 
-}
-
-Node* AST_Function::resolve_pass(Type*, int*, Scope* scope) {
-    for (int i = 0; i < param_names.size(); i++)
-        body->define_variable(param_names[i], type->params[i] , nullptr);
-
-    FunctionType* _type = make_function_type_unique(*type);
-    delete type;
-    type = _type;
-
-    MUST (body->resolve_pass(nullptr, nullptr, scope));
-    return this;
 }
 
 Node* Scope::resolve_pass(Type*, int*, Scope* scope) {
@@ -143,7 +91,7 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
 
         // FIXME this ignores shadowing
         for (Scope* s = scope; s; s = s->parent) {
-            for (Definition& def : s->definitions) {
+            for (auto& def : s->fn_definitions) {
                 if (def.key == fn_atom) {
                     Function* possible_fn = dynamic_cast<Function*>(def.value);
                     possible_overloads.push_back(possible_fn);
@@ -167,7 +115,7 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             i32 friction = 0;
 
             for (int i = 0; i < args.size(); i++) {
-                Node* new_arg = args[i]->resolve_pass_cast_wrapper(&args[i], overload->type->params[i], &friction, scope);
+                Node* new_arg = args[i]->resolve_pass_cast_wrapper(&args[i], overload->get_fn_type()->params[i], &friction, scope);
                 if (!new_arg)
                     goto NextOverload;
                 new_tmp_args[i] = new_arg;
@@ -239,14 +187,13 @@ Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
 Type* IfStatement::get_type()   { NOT_IMPLEMENTED(); }
 Type* Type::get_type()          { return &t_type; }
-Type* Function::get_type()      { return type; }
 Type* Variable::get_type()      { return type; }
 Type* UnresolvedRef::get_type() { return nullptr; }
 Type* Scope::get_type()         { return nullptr; }
 
 Type* Call::get_type() {
     if (resolved)
-        return ((AST_Function*)fn)->type->return_type;
+        return ((Function*)fn)->get_fn_type()->return_type;
     return nullptr;
 }
 

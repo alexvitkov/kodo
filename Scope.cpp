@@ -12,9 +12,25 @@ void Scope::init_global_scope() {
     }
 }
 
+bool Scope::define_function(Atom key, AST_Function* value) {
+    // FIXME collision check
+    // for (const Definition& def : definitions) {
+    //     if (def.key.atom == key.atom && def.value->type->equals(value->type, false)) {
+    //         add_error(new AlreadyDefinedError({
+    //             def.value,
+    //             value
+    //         }));
+    //         return false;
+    //     }
+    // }
+    
+    templated_fn_definitions.push_back({ key, value });
+    return true;
+}
+
 bool Scope::define_function(Atom key, Function* value) {
-    for (const Definition& def : definitions) {
-        if (def.key.atom == key.atom && def.value->type->equals(value->type, false)) {
+    for (const auto& def : fn_definitions) {
+        if (def.key.atom == key.atom && def.value->get_fn_type()->equals(value->get_fn_type(), false)) {
             add_error(new AlreadyDefinedError({
                 def.value,
                 value
@@ -23,7 +39,7 @@ bool Scope::define_function(Atom key, Function* value) {
         }
     }
     
-    definitions.push_back({ key, value });
+    fn_definitions.push_back({ key, value });
     return true;
 }
 

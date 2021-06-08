@@ -101,11 +101,11 @@ Scope* parse_block();
 // when hard_delimiter is hit, it is consumed and the expression is returned
 // when soft_delimiter is hit, it is NOT consumed.
 //
-// for example parse_expression(',', ')') will stop at either a comma or closign bracket
-// but the closing brackets won't be condumed.
+// for example parse_expression(',', ')') will stop at either a comma or closingn bracket
+// but the closing brackets won't be consumed.
 //
 // rotate_tree is a helper argument that should always be true when calling a top-level parse_expression
-Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true, bool brackets = false);
+Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tree = true, bool in_brackets = false);
 
 
 
@@ -156,7 +156,6 @@ bool parse(Atom delimiter) {
 AST_Function* parse_fn() {
     // the fn keyword has been consumed before calling this function.
     AST_Function* fn = new AST_Function();
-    fn->type = new FunctionType();
 
     Token tok = ts.peek();
     if (tok.is_identifier()) {
@@ -176,9 +175,9 @@ AST_Function* parse_fn() {
                 Node* type = parse_expression(',', ']'); // FIXME make sure this is a valid type
                 MUST (type);
 
-                fn->template_params.push_back({ id, (Type*)type });
+                fn->template_params.push_back(Parameter { id, (Type*)type });
             } else {
-                fn->template_params.push_back({ id, nullptr });
+                fn->template_params.push_back(Parameter { id, nullptr });
             }
 
             if (ts.peek() == ',')
@@ -196,13 +195,13 @@ AST_Function* parse_fn() {
     while (ts.peek() != ')') {
 
         MUST (tok = ts.expect_id());
-        fn->param_names.push_back(tok);
         MUST (ts.expect(':'));
-
         Node* expr = parse_expression(',', ')');
         MUST (expr);
 
-        fn->type->params.push_back((Type*)expr);
+        fn->params.push_back(Parameter { tok, (Type*)expr });
+
+        fn->params.push_back({ tok, (Type*)expr });
     }
 
     ts.pop(); // discard the ')'
@@ -212,7 +211,7 @@ AST_Function* parse_fn() {
         ts.pop();
         Node* return_type = parse_expression(0, '{');
         MUST (return_type);
-        fn->type->return_type = (Type*)return_type;
+        fn->return_type = (Type*)return_type;
     }
 
     MUST (fn->body = parse_block());

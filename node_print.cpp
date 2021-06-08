@@ -47,9 +47,9 @@ void AST_Function::print(std::ostream& o, bool print_definition) {
 
 
         o << '(';
-        for (int i = 0; i < type->params.size(); i++) {
-            o << param_names[i] << ": " << type->params[i];
-            if (i != type->params.size() - 1)
+        for (int i = 0; i < params.size(); i++) {
+            o << params[i].name << ": " << params[i].type;
+            if (i != params.size() - 1)
                 o << ", ";
         }
         o << ") " << body;

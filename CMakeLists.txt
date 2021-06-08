@@ -26,6 +26,7 @@ set(SOURCES
     lexer.cpp
     parser.cpp
     NumberLiteral.cpp
+    Function.cpp
     keywords.gperf.gen.inc)
 
 

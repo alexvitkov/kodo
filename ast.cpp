@@ -52,13 +52,6 @@ Node* Call::rotate() {
 
 
 
-bool AST_Function::forward_declare_pass(Scope* scope) { 
-    if (name)
-        MUST (scope->define_function(name, this));
-
-    MUST (body->forward_declare_pass(scope));
-    return true;
-}
 
 bool Node::forward_declare_pass(Scope* scope) { 
     return true; 
