@@ -19,7 +19,10 @@ static void print_indent(std::ostream& o) {
 }
 
 std::ostream& operator<<(std::ostream& o, Node* n) {
-    n->print(o, false);
+    if (!n)
+        o << "NULL"; 
+    else
+        n->print(o, false);
     return o;
 }
 

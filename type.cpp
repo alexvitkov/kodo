@@ -165,10 +165,10 @@ NextOverload:;
     }
 
     if (best_overload) {
-        call->fn = best_overload->get_instance(best_overload_template_types);
-        if (!call->fn)
-            return false;
+        Function* new_fn = best_overload->get_instance(best_overload_template_types);
+        MUST (new_fn);
 
+        call->fn = new_fn;
         call->args = new_tmp_args;
         return true;
     }

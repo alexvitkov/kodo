@@ -1,5 +1,6 @@
 #include <Node/UnresolvedRef.h>
 #include <Node/Function.h>
+#include <iostream>
 #include <unordered_map>
 #include <Node/Scope.h>
 
@@ -87,6 +88,16 @@ bool AST_Function::forward_declare_pass(Scope* scope) {
     return true;
 }
 
+Node* AST_Function_Instance::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
+    // FIXME make sure argument types & template argument types are actually types
+    for (int i = 0; i < type->params.size(); i++)
+        body->define_variable(ast_fn->params[i].name, type->params[i], nullptr);
+
+    MUST (body->resolve_pass(nullptr, nullptr, scope));
+    return this;
+    return this;
+}
+
 Node* AST_Function_OnlyInstance::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
     // FIXME make sure argument types & template argument types are actually types
     for (int i = 0; i < type->params.size(); i++)
@@ -110,6 +121,15 @@ AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn, const std::ve
         body->redefine(ast_fn->template_params[i], template_args[i]);
 
     this->template_types = template_args;
+
+    FunctionType type_temp;
+    type_temp.return_type = ast_fn->return_type;
+    for (int i = 0; i < ast_fn->params.size(); i++) {
+        // FIXME
+        type_temp.params.push_back(ast_fn->params[i].type);
+    }
+    type = make_function_type_unique(type_temp);
+
 }
 
 Function* AST_Function::get_instance(const std::vector<Type*>& template_args) {
