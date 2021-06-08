@@ -50,10 +50,6 @@ Type* AST_Function::get_type() {
     NOT_IMPLEMENTED(); 
 }
 
-FunctionType* AST_Function_OnlyInstance::get_fn_type() {
-    return type;
-}
-
 FunctionType* AST_Function_Instance::get_fn_type() {
     return type;
 }
@@ -62,23 +58,10 @@ FunctionType* DefaultAssignmentOperator::get_fn_type() {
     return type; 
 }
 
-AST_Function_OnlyInstance::AST_Function_OnlyInstance(AST_Function* ast_fn) : ast_fn(ast_fn) {
-    assert(ast_fn->template_params.size() == 0);
-
-    FunctionType type_temp;
-    type_temp.return_type = ast_fn->return_type;
-    for (int i = 0; i < ast_fn->params.size(); i++)
-        type_temp.params.push_back(ast_fn->params[i].type);
-
-    type = make_function_type_unique(type_temp);
-
-    body = new Scope(ast_fn->body->parent);
-}
-
 bool AST_Function::forward_declare_pass(Scope* scope) { 
     if (name) {
         if (template_params.empty()) {
-            MUST (scope->define_function(name, new AST_Function_OnlyInstance(this)));
+            MUST (scope->define_function(name, new AST_Function_Instance(this)));
         } else {
             MUST (scope->define_function(name, this));
         }
@@ -98,18 +81,19 @@ Node* AST_Function_Instance::resolve_pass(Type* wanted_type, int* friction, Scop
     return this;
 }
 
-Node* AST_Function_OnlyInstance::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
-    // FIXME make sure argument types & template argument types are actually types
-    for (int i = 0; i < type->params.size(); i++)
-        body->define_variable(ast_fn->params[i].name, ast_fn->params[i].type, nullptr);
+AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn)
+    : ast_fn(ast_fn) 
+{
+    name = ast_fn->name;
+    body = (Scope*)ast_fn->body->clone();
 
-    FunctionType* _type = make_function_type_unique(*type);
-    delete type;
-    type = _type;
-
-    MUST (body->resolve_pass(nullptr, nullptr, scope));
-    return this;
-    return this;
+    FunctionType type_temp;
+    type_temp.return_type = ast_fn->return_type;
+    for (int i = 0; i < ast_fn->params.size(); i++) {
+        // FIXME
+        type_temp.params.push_back(ast_fn->params[i].type);
+    }
+    type = make_function_type_unique(type_temp);
 }
 
 AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn, const std::vector<Type*>& template_args)

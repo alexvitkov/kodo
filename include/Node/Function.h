@@ -38,23 +38,13 @@ struct AST_Function_Instance : Function {
     Scope* body;
     std::vector<Type*> template_types;
 
+    AST_Function_Instance(AST_Function* ast_fn);
     AST_Function_Instance(AST_Function* ast_fn, const std::vector<Type*>& template_types);
     virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
     virtual FunctionType* get_fn_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
 };
 
-struct AST_Function_OnlyInstance : Function {
-    AST_Function* ast_fn;
-    FunctionType* type;
-
-    Scope* body;
-
-    virtual FunctionType* get_fn_type() override;
-
-    AST_Function_OnlyInstance(AST_Function* ast_fn);
-    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
-};
 
 struct DefaultAssignmentOperator : Function {
     FunctionType* type;
