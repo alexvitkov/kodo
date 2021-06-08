@@ -46,7 +46,7 @@ enum TokenType : atom_t {
 
 
 struct Token : Atom {
-    struct NumberLiteral* nl;
+    struct NumberLiteral* nl = nullptr;
 
     inline Token(Atom atom) : Atom(atom) {}
     inline Token(atom_t at) : Atom(at) {}

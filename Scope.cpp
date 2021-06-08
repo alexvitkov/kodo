@@ -57,10 +57,6 @@ Node* Scope::define(Atom key, Node* value) {
         return nullptr;
     }
     regular_namespace[key] = value;
-    return value;
-}
 
-Node* Scope::redefine(Atom key, Node* value) {
-    regular_namespace[key] = value;
     return value;
 }

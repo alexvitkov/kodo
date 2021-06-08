@@ -98,7 +98,7 @@ NextOverload:;
     if (!best_overload)
         return false;
 
-    delete (UnresolvedRef*)call->fn;
+    // delete (UnresolvedRef*)call->fn;
     call->fn = best_overload;
     call->args = best_overload_args;
     return true;

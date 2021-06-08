@@ -241,7 +241,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
     while (true) {
         Token tok = ts.pop();
 
-        if (tok.atom == TOK_NUMBER_LITERAL) {
+        if (tok.atom == TOK_NUMBER_LITERAL && tok.nl) {
             if (buildup) {
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
@@ -353,6 +353,8 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
         add_error(new UnexpectedTokenError(tok, soft_delimiter ? soft_delimiter : hard_delimiter));
         return nullptr;
     }
+
+    UNREACHABLE();
 }
 
 Scope* parse_block(Scope* block) {

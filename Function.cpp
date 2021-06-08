@@ -73,8 +73,12 @@ bool AST_Function::forward_declare_pass(Scope* scope) {
 
 Node* AST_Function_Instance::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
     // FIXME make sure argument types & template argument types are actually types
-    for (int i = 0; i < type->params.size(); i++)
-        body->define_variable(ast_fn->params[i].name, type->params[i], nullptr);
+
+    for (int i = 0; i < type->params.size(); i++) {
+        Type* t = (Type*)type->params[i]->resolve_pass(&t_type, nullptr, body);
+        assert(t); // FIXME
+        body->define_variable(ast_fn->params[i].name, t, nullptr);
+    }
 
     MUST (body->resolve_pass(nullptr, nullptr, scope));
     return this;
@@ -93,6 +97,7 @@ AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn)
         // FIXME
         type_temp.params.push_back(ast_fn->params[i].type);
     }
+
     type = make_function_type_unique(type_temp);
 }
 
@@ -102,7 +107,7 @@ AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn, const std::ve
     name = ast_fn->name;
     body = (Scope*)ast_fn->body->clone();
     for (int i = 0;  i < template_args.size(); i++)
-        body->redefine(ast_fn->template_params[i], template_args[i]);
+        body->define(ast_fn->template_params[i], template_args[i]);
 
     this->template_types = template_args;
 

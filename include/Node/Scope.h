@@ -42,7 +42,6 @@ struct Scope : Node {
 
     Variable* define_variable(Atom key, Type* type, Node* source_node);
     Node* define(Atom key, Node* value);
-    Node* redefine(Atom key, Node* new_value);
 
     virtual bool forward_declare_pass(Scope* scope) override;
     virtual Node* clone() override;
