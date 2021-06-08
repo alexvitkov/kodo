@@ -57,6 +57,127 @@ Node* Scope::resolve_pass(Type*, int*, Scope* scope) {
     return this;
 }
 
+
+static bool pick_non_template_overload(Call* call, Atom fn_atom, Scope* scope) {
+    // FIXME this ignores shadowing
+    std::vector<Function*> possible_overloads;
+    for (Scope* s = scope; s; s = s->parent) {
+        for (auto& def : s->fn_definitions) {
+            if (def.key == fn_atom)
+                possible_overloads.push_back(def.value);
+        }
+    }
+
+    if (possible_overloads.empty())
+        return false;
+
+    int min_friction = INT32_MAX;
+    Function* best_overload = nullptr;
+    std::vector<Node*> best_overload_args;
+    std::vector<Node*> new_tmp_args(call->args.size());
+
+    for (Function* overload : possible_overloads) {
+        i32 friction = 0;
+
+        for (int i = 0; i < call->args.size(); i++) {
+            Node* new_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], overload->get_fn_type()->params[i], &friction, scope);
+            if (!new_arg)
+                goto NextOverload;
+            new_tmp_args[i] = new_arg;
+        }
+
+        if (friction < min_friction) {
+            min_friction  = friction;
+            best_overload = overload;
+            best_overload_args = new_tmp_args;
+        }
+
+NextOverload:;
+    }
+
+    if (!best_overload)
+        return false;
+
+    delete (UnresolvedRef*)call->fn;
+    call->fn = best_overload;
+    call->args = best_overload_args;
+    return true;
+}
+
+static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
+    std::vector<AST_Function*> possible_overloads;
+    for (Scope* s = scope; s; s = s->parent) {
+        for (auto& def : s->templated_fn_definitions) {
+            if (def.key == fn_atom)
+                possible_overloads.push_back(def.value);
+        }
+    }
+
+    int min_friction = INT32_MAX;
+    AST_Function* best_overload = nullptr;
+    std::vector<Node*> best_overload_args;
+    std::vector<Type*> best_overload_template_types;
+    std::vector<Node*> new_tmp_args(call->args.size());
+
+    for (AST_Function* ast_fn : possible_overloads) {
+        i32 friction = 0;
+        std::vector<Type*> template_types(ast_fn->template_params.size());
+
+        for (int i = 0; i < call->args.size(); i++) {
+            Node* _param_type = ast_fn->params[i].type;
+            Type* param_type = dynamic_cast<Type*>(_param_type); // FIXME type
+            TemplatePlaceholder* ph = dynamic_cast<TemplatePlaceholder*>(_param_type);
+
+
+            Node* resolved_arg = nullptr;
+
+            if (param_type) {
+                // non-templated param
+                resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], param_type, &friction, scope);
+            } else if (ph) {
+                // templated param
+                if (template_types[ph->index]) {
+                    // the template has already been resolved
+                    resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], template_types[ph->index], &friction, scope);
+                } else {
+                    // the template hasn't yet been resolved.
+                    resolved_arg = call->args[i]->resolve_pass(nullptr, nullptr, scope);
+                    template_types[ph->index] = resolved_arg->get_type();
+                }
+            }
+            else {
+                UNREACHABLE(); // we should've failed earlier when checking for invalid types
+            }
+            if (!resolved_arg)
+                goto NextOverload;
+
+            new_tmp_args[i] = resolved_arg;
+        }
+
+        if (friction < min_friction) {
+            min_friction  = friction;
+            best_overload = ast_fn;
+            best_overload_args = new_tmp_args;
+            best_overload_template_types = template_types;
+        }
+
+NextOverload:;
+    }
+
+    if (best_overload) {
+        call->fn = best_overload->get_instance(best_overload_template_types);
+        if (!call->fn)
+            return false;
+
+        call->args = new_tmp_args;
+        return true;
+    }
+
+    return false;
+}
+
+
+
 Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
     if (tried_resolved) {
         if (!resolved || (wanted_type && wanted_type != get_type()))
@@ -87,65 +208,15 @@ Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
             return nullptr;
         }
 
-        std::vector<Function*> possible_overloads;
-
-        // FIXME this ignores shadowing
-        for (Scope* s = scope; s; s = s->parent) {
-            for (auto& def : s->fn_definitions) {
-                if (def.key == fn_atom) {
-                    Function* possible_fn = dynamic_cast<Function*>(def.value);
-                    possible_overloads.push_back(possible_fn);
-                }
-            }
-        }
-
-        if (possible_overloads.empty()) {
+        if (pick_non_template_overload(this, fn_atom, scope)) {
+            resolved = true;
+        } else if (pick_template_overload(this, fn_atom, scope)) {
+            resolved = true;
+        } else {
             add_error(new InvalidCallError(this));
             return nullptr;
         }
-
-        int min_friction = INT32_MAX;
-
-        Function* best_overload = nullptr;
-        
-        std::vector<Node*> best_overload_args;
-        std::vector<Node*> new_tmp_args(args.size());
-
-        for (Function* overload : possible_overloads) {
-            i32 friction = 0;
-
-            for (int i = 0; i < args.size(); i++) {
-                Node* new_arg = args[i]->resolve_pass_cast_wrapper(&args[i], overload->get_fn_type()->params[i], &friction, scope);
-                if (!new_arg)
-                    goto NextOverload;
-                new_tmp_args[i] = new_arg;
-            }
-
-            if (friction < min_friction) {
-                min_friction  = friction;
-                best_overload = overload;
-                best_overload_args = new_tmp_args;
-            }
-
-NextOverload:;
-        }
-
-//         if (best_overload)
-//             for (int i = 0; i < args.size(); i++)
-//                 if (args[i] != best_overload_args[i])
-//                     delete args[i];
-
-        if (!best_overload) {
-            add_error(new InvalidCallError(this));
-            return nullptr;
-        }
-
-        delete (UnresolvedRef*)fn;
-        fn = best_overload;
-        args = best_overload_args;
     }
-
-    resolved = true;
 
     return (!wanted_type || wanted_type == get_type()) ? this : nullptr;
 }
@@ -155,8 +226,8 @@ NextOverload:;
 Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
     // assuming we're resolving a variable
     for (Scope* s = scope; s != nullptr; s = s->parent) {
-        for (auto& vardecl: s->variables) {
-            if (vardecl.first == atom && (!type || type == vardecl.second->type))
+        for (auto& vardecl: s->regular_namespace) {
+            if (vardecl.first == atom && (!type || type == vardecl.second->get_type()))
                 return vardecl.second;
         }
     }
@@ -186,6 +257,7 @@ Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
 
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
 Type* IfStatement::get_type()   { NOT_IMPLEMENTED(); }
+Type* TemplatePlaceholder::get_type() { NOT_IMPLEMENTED(); }
 Type* Type::get_type()          { return &t_type; }
 Type* Variable::get_type()      { return type; }
 Type* UnresolvedRef::get_type() { return nullptr; }

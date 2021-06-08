@@ -11,6 +11,17 @@
 #include <Node/Cast.h>
 
 
+Node* Node::clone() {
+    NOT_IMPLEMENTED(); // child classes must override this
+}
+
+Type* Node::get_type() {
+    NOT_IMPLEMENTED(); // child classes must override this
+}
+
+void Node::print(std::ostream& o, bool print_definition) {
+    o << "NODE";
+}
 
 Node::~Node() {}
 

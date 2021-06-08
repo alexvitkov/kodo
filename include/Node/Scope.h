@@ -18,7 +18,15 @@ struct Definition {
 
 
 struct Scope : Node {
+
     Scope* parent = nullptr;
+
+    std::vector<Node*> statements;
+    std::vector<Definition<Function*>> fn_definitions;
+    std::vector<Definition<AST_Function*>> templated_fn_definitions;
+    std::unordered_map<atom_t, Node*> regular_namespace;
+    std::vector<Cast*> casts;
+
 
     inline Scope(Scope* parent) : parent(parent) {
         if (!parent)
@@ -28,19 +36,16 @@ struct Scope : Node {
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
 
-    std::vector<Node*> statements;
-    std::vector<Definition<Function*>> fn_definitions;
-    std::vector<Definition<AST_Function*>> templated_fn_definitions;
-    std::unordered_map<atom_t, Variable*> variables;
-    std::vector<Cast*> casts;
-
 
     bool define_function(Atom key, AST_Function* value);
     bool define_function(Atom key, Function* value);
 
     Variable* define_variable(Atom key, Type* type, Node* source_node);
+    Node* define(Atom key, Node* value);
+    Node* redefine(Atom key, Node* new_value);
 
     virtual bool forward_declare_pass(Scope* scope) override;
+    virtual Node* clone() override;
     virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
     virtual bool tree_compare(Node* other) override;
 

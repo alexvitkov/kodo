@@ -7,6 +7,7 @@
 #include <Node/Call.h>
 #include <Node/NumberLiteral.h>
 #include <Node/IfStatement.h>
+#include <Node/TemplatePlaceholder.h>
 
 
 struct TokenStream {
@@ -96,7 +97,7 @@ void rewind() {
 bool parse(Atom end);
 AST_Function* parse_fn();
 IfStatement* parse_if();
-Scope* parse_block();
+Scope* parse_block(Scope* s = nullptr);
 
 // when hard_delimiter is hit, it is consumed and the expression is returned
 // when soft_delimiter is hit, it is NOT consumed.
@@ -111,7 +112,6 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
 
 thread_local Scope* current_context;
 thread_local TokenStream ts;
-thread_local Scope* block;
 thread_local bool bracket;
 
 
@@ -156,6 +156,10 @@ bool parse(Atom delimiter) {
 AST_Function* parse_fn() {
     // the fn keyword has been consumed before calling this function.
     AST_Function* fn = new AST_Function();
+    fn->body = new Scope(current_context);
+
+    Scope* old_current = current_context;
+    current_context = fn->body;
 
     Token tok = ts.peek();
     if (tok.is_identifier()) {
@@ -163,22 +167,14 @@ AST_Function* parse_fn() {
         fn->name = tok;
     }     
 
-    // 
     if (ts.peek() == '[') {
         ts.pop();
 
         while (true) {
             Token id = ts.expect_id();
 
-            if (ts.peek() == ':') {
-                ts.pop();
-                Node* type = parse_expression(',', ']'); // FIXME make sure this is a valid type
-                MUST (type);
-
-                fn->template_params.push_back(Parameter { id, (Type*)type });
-            } else {
-                fn->template_params.push_back(Parameter { id, nullptr });
-            }
+            fn->template_params.push_back(id);
+            fn->body->define(id, new TemplatePlaceholder(fn->template_params.size() - 1, id));
 
             if (ts.peek() == ',')
                 ts.pop();
@@ -199,8 +195,6 @@ AST_Function* parse_fn() {
         Node* expr = parse_expression(',', ')');
         MUST (expr);
 
-        fn->params.push_back(Parameter { tok, (Type*)expr });
-
         fn->params.push_back({ tok, (Type*)expr });
     }
 
@@ -214,7 +208,8 @@ AST_Function* parse_fn() {
         fn->return_type = (Type*)return_type;
     }
 
-    MUST (fn->body = parse_block());
+    MUST (fn->body = parse_block(fn->body));
+    current_context = old_current;
     return fn;
 }
 
@@ -298,7 +293,15 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-            buildup = new UnresolvedRef(tok);
+
+            auto it = current_context->regular_namespace.find(tok);
+            TemplatePlaceholder* ph;
+            if (it != current_context->regular_namespace.end()) {
+                ph = dynamic_cast<TemplatePlaceholder*>(it->second);
+                buildup = ph ? (Node*)ph : new UnresolvedRef(tok);
+            } else
+                buildup = new UnresolvedRef(tok);
+
             continue;
         }
 
@@ -322,7 +325,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
             continue;
         }
 
-        if (tok >= TOK_I8 && tok <= TOK_NUMBER_LITERAL) {
+        if (tok >= _TOK_TYPES_START && tok < _TOK_TYPES_END) {
             if (buildup) {
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
@@ -362,8 +365,9 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
     }
 }
 
-Scope* parse_block() {
-    Scope* block = new Scope(current_context);
+Scope* parse_block(Scope* block) {
+    if (!block)
+        block = new Scope(current_context);
 
     Scope* old_current = current_context;
     current_context = block;

@@ -18,6 +18,8 @@ enum TokenType : atom_t {
 
 
     // VOLATILE - must be ordered the same as the string array in atom.cpp
+
+    _TOK_TYPES_START = 0x80,
     TOK_I8 = 0x80,
     TOK_I16,
     TOK_I32,
@@ -28,6 +30,8 @@ enum TokenType : atom_t {
     TOK_U64,
     TOK_NUMBER_LITERAL,
     TOK_TYPE,
+    _TOK_TYPES_END = TOK_TYPE,
+
     TOK_FN,
     TOK_PLUSPLUS,
     TOK_MINUSMINUS,

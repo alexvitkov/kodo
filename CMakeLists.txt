@@ -20,6 +20,7 @@ set(SOURCES
     atom.cpp
     ast.cpp
     Scope.cpp
+    node_clone.cpp
     node_print.cpp
     node_tree_compare.cpp
     type.cpp

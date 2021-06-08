@@ -7,8 +7,8 @@ struct Type;
 struct Scope;
 
 struct Node {
-    virtual Type* get_type() = 0;
-    virtual void print(std::ostream& o, bool print_definition) = 0;
+    virtual Type* get_type();
+    virtual void print(std::ostream& o, bool print_definition);
 
     virtual bool forward_declare_pass(Scope* scope);
 
@@ -29,6 +29,8 @@ struct Node {
     // two nodes have the same structure
     // TODO this should only be in the test build
     virtual bool tree_compare(Node* other);
+    
+    virtual Node* clone();
 
     Atom as_atom_reference();
 

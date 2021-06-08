@@ -44,15 +44,23 @@ bool Scope::define_function(Atom key, Function* value) {
 }
 
 Variable* Scope::define_variable(Atom key, Type* type, Node* source_node) {
-    if (variables.contains(key)) {
+    return (Variable*)define(key, new Variable(key, this, type));
+}
+
+Node* Scope::define(Atom key, Node* value) {
+    if (regular_namespace.contains(key)) {
         std::vector<Node*> defs {
-            variables[key],
-            source_node,
+            regular_namespace[key],
+            value,
         };
         add_error(new AlreadyDefinedError(defs));
         return nullptr;
     }
-    Variable* var = new Variable(key, this, type);
-    variables[key] = var;
-    return var;
+    regular_namespace[key] = value;
+    return value;
+}
+
+Node* Scope::redefine(Atom key, Node*  value) {
+    regular_namespace[key] = value;
+    return value;
 }

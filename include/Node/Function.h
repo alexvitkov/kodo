@@ -3,6 +3,7 @@
 #include <Node.h>
 #include <Type.h>
 #include <vector>
+#include <Node/TemplatePlaceholder.h>
 
 struct Function : Node {
     Atom name = 0;
@@ -22,14 +23,25 @@ struct AST_Function : Node {
     Type* return_type;
 
     std::vector<Parameter> params;
-    std::vector<Parameter> template_params;
+    std::vector<Atom> template_params;
 
-    Function* get_instance(std::vector<Node*> template_args);
+    Function* get_instance(const std::vector<Type*>& template_args);
 
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual Type* get_type() override;
     virtual bool forward_declare_pass(Scope* scope) override;
     // virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
+};
+
+struct AST_Function_Instance : Function {
+    AST_Function* ast_fn;
+    FunctionType* type;
+    Scope* body;
+    std::vector<Type*> template_types;
+
+    AST_Function_Instance(AST_Function* ast_fn, const std::vector<Type*>& template_types);
+    virtual FunctionType* get_fn_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
 };
 
 struct AST_Function_OnlyInstance : Function {

@@ -1,3 +1,4 @@
+#include <Node/UnresolvedRef.h>
 #include <Node/Function.h>
 #include <unordered_map>
 #include <Node/Scope.h>
@@ -52,6 +53,10 @@ FunctionType* AST_Function_OnlyInstance::get_fn_type() {
     return type;
 }
 
+FunctionType* AST_Function_Instance::get_fn_type() {
+    return type;
+}
+
 FunctionType* DefaultAssignmentOperator::get_fn_type() { 
     return type; 
 }
@@ -94,4 +99,23 @@ Node* AST_Function_OnlyInstance::resolve_pass(Type* wanted_type, int* friction, 
     MUST (body->resolve_pass(nullptr, nullptr, scope));
     return this;
     return this;
+}
+
+AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn, const std::vector<Type*>& template_args)
+    : ast_fn(ast_fn) 
+{
+    name = ast_fn->name;
+    body = (Scope*)ast_fn->body->clone();
+    for (int i = 0;  i < template_args.size(); i++)
+        body->redefine(ast_fn->template_params[i], template_args[i]);
+
+    this->template_types = template_args;
+}
+
+Function* AST_Function::get_instance(const std::vector<Type*>& template_args) {
+    // FIXME uniqueness
+    Function* fn = new AST_Function_Instance(this, template_args);
+    MUST (fn->forward_declare_pass(body->parent));
+    MUST (fn->resolve_pass(nullptr, nullptr, body->parent));
+    return fn;
 }

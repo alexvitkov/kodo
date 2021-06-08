@@ -6,6 +6,7 @@
 #include <Node/Variable.h>
 #include <Node/Cast.h>
 #include <Node/IfStatement.h>
+#include <Node/TemplatePlaceholder.h>
 
 #include <iostream>
 
@@ -35,9 +36,7 @@ void AST_Function::print(std::ostream& o, bool print_definition) {
         if (!template_params.empty()) {
             o << '[';
             for (int i = 0; i < template_params.size(); i++) {
-                o << template_params[i].name;
-                if (template_params[i].type)
-                    o << ": " << template_params[i].type;
+                o << template_params[i];
                 if (i != template_params.size() - 1)
                     o << ", ";
             }
@@ -144,4 +143,21 @@ void IfStatement::print(std::ostream& o, bool print_definition) {
     o << "if (" << condition << ") " << then_block;
     if (else_block)
         o << " else " << else_block;
+}
+
+void TemplatePlaceholder::print(std::ostream& o, bool print_definition) {
+    o << name;
+}
+
+void AST_Function_Instance::print(std::ostream& o, bool print_definition) {
+    o << name;
+    
+    o << "[";
+    for (int i = 0; i < template_types.size(); i++) {
+        o << template_types[i];
+        if (i != template_types.size() - 1)
+            o << ", ";
+    }
+    o << "]";
+
 }
