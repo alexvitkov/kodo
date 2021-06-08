@@ -6,7 +6,6 @@
 #include <Node/Variable.h>
 #include <Node/Cast.h>
 #include <Node/IfStatement.h>
-#include <Node/TemplatePlaceholder.h>
 
 Node* Scope::clone() {
     Scope* new_scope = new Scope(*this);

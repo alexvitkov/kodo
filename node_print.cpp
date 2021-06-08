@@ -6,7 +6,6 @@
 #include <Node/Variable.h>
 #include <Node/Cast.h>
 #include <Node/IfStatement.h>
-#include <Node/TemplatePlaceholder.h>
 
 #include <iostream>
 
@@ -146,10 +145,6 @@ void IfStatement::print(std::ostream& o, bool print_definition) {
     o << "if (" << condition << ") " << then_block;
     if (else_block)
         o << " else " << else_block;
-}
-
-void TemplatePlaceholder::print(std::ostream& o, bool print_definition) {
-    o << name;
 }
 
 void AST_Function_Instance::print(std::ostream& o, bool print_definition) {

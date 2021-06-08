@@ -7,7 +7,6 @@
 #include <Node/Call.h>
 #include <Node/NumberLiteral.h>
 #include <Node/IfStatement.h>
-#include <Node/TemplatePlaceholder.h>
 
 
 struct TokenStream {
@@ -174,7 +173,6 @@ AST_Function* parse_fn() {
             Token id = ts.expect_id();
 
             fn->template_params.push_back(id);
-            fn->body->define(id, new TemplatePlaceholder(fn->template_params.size() - 1, id));
 
             if (ts.peek() == ',')
                 ts.pop();
@@ -293,15 +291,7 @@ Node* parse_expression(Atom hard_delimiter, Atom soft_delimiter, bool rotate_tre
                 add_error(new UnexpectedTokenError(tok, ERR_ATOM_ANY_EXPRESSION));
                 return nullptr;
             }
-
-            auto it = current_context->regular_namespace.find(tok);
-            TemplatePlaceholder* ph;
-            if (it != current_context->regular_namespace.end()) {
-                ph = dynamic_cast<TemplatePlaceholder*>(it->second);
-                buildup = ph ? (Node*)ph : new UnresolvedRef(tok);
-            } else
-                buildup = new UnresolvedRef(tok);
-
+            buildup = new UnresolvedRef(tok);
             continue;
         }
 

@@ -126,7 +126,7 @@ static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
         for (int i = 0; i < call->args.size(); i++) {
             Node* _param_type = ast_fn->params[i].type;
             Type* param_type = dynamic_cast<Type*>(_param_type); // FIXME type
-            TemplatePlaceholder* ph = dynamic_cast<TemplatePlaceholder*>(_param_type);
+            UnresolvedRef* ph = dynamic_cast<UnresolvedRef*>(_param_type);
 
 
             Node* resolved_arg = nullptr;
@@ -135,14 +135,24 @@ static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
                 // non-templated param
                 resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], param_type, &friction, scope);
             } else if (ph) {
+
+                int index = -1;
+                for (int i = 0; i < ast_fn->template_params.size(); i++)
+                    if (ph->atom == ast_fn->template_params[i]) {
+                        index = i;
+                        break;
+                    }
+                assert(index >= 0); // FIXME
+
+
                 // templated param
-                if (template_types[ph->index]) {
+                if (template_types[index]) {
                     // the template has already been resolved
-                    resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], template_types[ph->index], &friction, scope);
+                    resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], template_types[index], &friction, scope);
                 } else {
                     // the template hasn't yet been resolved.
                     resolved_arg = call->args[i]->resolve_pass(nullptr, nullptr, scope);
-                    template_types[ph->index] = resolved_arg->get_type();
+                    template_types[index] = resolved_arg->get_type();
                 }
             }
             else {
@@ -257,7 +267,6 @@ Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
 
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }
 Type* IfStatement::get_type()   { NOT_IMPLEMENTED(); }
-Type* TemplatePlaceholder::get_type() { NOT_IMPLEMENTED(); }
 Type* Type::get_type()          { return &t_type; }
 Type* Variable::get_type()      { return type; }
 Type* UnresolvedRef::get_type() { return nullptr; }

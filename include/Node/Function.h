@@ -3,7 +3,6 @@
 #include <Node.h>
 #include <Type.h>
 #include <vector>
-#include <Node/TemplatePlaceholder.h>
 
 struct Function : Node {
     Atom name = 0;
