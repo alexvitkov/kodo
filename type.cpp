@@ -17,8 +17,8 @@ Type t_u8 (TOK_U8);
 Type t_u16(TOK_U16);
 Type t_u32(TOK_U32);
 Type t_u64(TOK_U64);
-Type t_number_literal(TOK_NUMBER_LITERAL);
-Type t_type(TOK_TYPE);
+EtherealType t_number_literal(TOK_NUMBER_LITERAL);
+EtherealType t_type(TOK_TYPE);
 
 // VOLATILE - those must be ordered the same way as the TOK_* enum entries
 Type* const primitive_numeric_types[8] = {
@@ -26,6 +26,8 @@ Type* const primitive_numeric_types[8] = {
     &t_u8, &t_u16, &t_u32, &t_u64,
 };
 
+bool Type::is_ethereal()         { return false; } 
+bool EtherealType::is_ethereal() { return true; } 
 
 bool Node::resolve_children() {
     return true;
