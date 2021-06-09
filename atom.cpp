@@ -20,6 +20,7 @@ static const char* token_names123[] = {
     "fn",
     "++",
     "--",
+    ":=",
 };
 
 
@@ -120,7 +121,8 @@ bool Atom::is_identifier() {
 
 bool Atom::is_infix_operator() { 
     return atom == 
-        '+' || atom == '-' || atom == '*' || atom == '/' || atom == '%' || atom == '=' || atom == ':'; 
+        '+' || atom == '-' || atom == '*' || atom == '/' || atom == '%' 
+        || atom == '=' || atom == ':' || atom == TOK_INFERDECL; 
 }
 
 int Atom::precedence() {
@@ -135,6 +137,7 @@ int Atom::precedence() {
         case '-':
             return 10;
         case '=':
+        case TOK_INFERDECL:
             return 5;
         default:
             return 10000;

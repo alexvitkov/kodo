@@ -35,6 +35,7 @@ enum TokenType : atom_t {
     TOK_FN,
     TOK_PLUSPLUS,
     TOK_MINUSMINUS,
+    TOK_INFERDECL,
 
     TOK_CAST,
     TOK_IF,

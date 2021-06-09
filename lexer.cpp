@@ -79,7 +79,7 @@ static u8 char_traits[128] = {
 /* 0x3a ':'  */ CT_OPERATOR,
 /* 0x3b ';'  */ CT_OPERATOR,
 /* 0x3c '<'  */ CT_NONE,
-/* 0x3d '='  */ CT_OPERATOR,
+/* 0x3d '='  */ CT_MULTICHAR_OP_START | CT_OPERATOR,
 /* 0x3e '>'  */ CT_NONE,
 /* 0x3f '?'  */ CT_NONE,
 /* 0x40 '@'  */ CT_NONE,
@@ -149,11 +149,11 @@ static u8 char_traits[128] = {
 };
 
 
-void emit(InputFile* input, Atom atom) {
+static void emit(InputFile* input, Atom atom) {
     input->tokens.push_back(Token(atom));
 }
 
-void emit(InputFile* input, NumberLiteral* nl) {
+static void emit(InputFile* input, NumberLiteral* nl) {
     input->tokens.push_back(Token::number_literal(nl));
 }
 
@@ -211,6 +211,15 @@ bool InputFile::lex() {
         }
 
         if (ct & CT_MULTICHAR_OP_START) {
+            // special case
+            // : followed by = emits a single token :=
+            // this is needed if we want "x : = ..." to wor
+            if (*c == '=' && !tokens.empty() && tokens.back() == ':') {
+                tokens.back() = TOK_INFERDECL;
+                goto Next;
+            }
+
+
             for (int i = 5; i > 1; i--) {
                 // FIXME buffer overflow
                 tok* t = in_word_set(c, i);
