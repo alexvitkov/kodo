@@ -27,63 +27,46 @@ Type* const primitive_numeric_types[8] = {
 };
 
 
-Node* Node::resolve_pass_cast_wrapper(Node** location, Type* wanted_type, int* friction, Scope* scope) {
-    Node* new_node = resolve_pass(wanted_type, friction, scope);
-    if (new_node && location) {
-        *location = new_node;
-    }
-    if (new_node && new_node->get_type() == wanted_type) {
-        return new_node;
-    }
-
-    for (Scope* s = scope; s != nullptr; s = s->parent) {
-        for (Cast* cast : s->casts) {
-            if (cast->destination_type == wanted_type && cast->source_type == get_type())
-                return cast->get_node(this);
-        }
-    }
-    return nullptr;
+bool Node::resolve_children() {
+    return true;
 }
 
-Node* Node::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
-    if (wanted_type && wanted_type != get_type())
-        return nullptr;
-    return this; 
+Node* Node::resolve(Scope* parent) {
+    return resolve_children() ? this : nullptr;
 }
 
-Node* Scope::resolve_pass(Type*, int*, Scope* scope) {
+bool Scope::resolve_children() {
     for (Node*& stmt : statements)
-        MUST (stmt = stmt->resolve_pass(nullptr, nullptr, this));
-    return this;
+        MUST (stmt = stmt->resolve(this));
+    return true;
 }
 
 
 static bool pick_non_template_overload(Call* call, Atom fn_atom, Scope* scope) {
     // FIXME this ignores shadowing
-    std::vector<Function*> possible_overloads;
+    std::vector<Function*> candidates;
     for (Scope* s = scope; s; s = s->parent) {
         for (auto& def : s->fn_definitions) {
             if (def.key == fn_atom)
-                possible_overloads.push_back(def.value);
+                candidates.push_back(def.value);
         }
     }
 
-    if (possible_overloads.empty())
+    if (candidates.empty())
         return false;
 
     int min_friction = INT32_MAX;
     Function* best_overload = nullptr;
     std::vector<Node*> best_overload_args;
+
     std::vector<Node*> new_tmp_args(call->args.size());
 
-    for (Function* overload : possible_overloads) {
+    for (Function* overload : candidates) {
         i32 friction = 0;
 
         for (int i = 0; i < call->args.size(); i++) {
-            Node* new_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], overload->get_fn_type()->params[i], &friction, scope);
-            if (!new_arg)
+            if (!(new_tmp_args[i] = call->args[i]->cast(overload->get_fn_type()->params[i], scope, &friction)))
                 goto NextOverload;
-            new_tmp_args[i] = new_arg;
         }
 
         if (friction < min_friction) {
@@ -105,11 +88,11 @@ NextOverload:;
 }
 
 static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
-    std::vector<AST_Function*> possible_overloads;
+    std::vector<AST_Function*> candidates;
     for (Scope* s = scope; s; s = s->parent) {
         for (auto& def : s->templated_fn_definitions) {
             if (def.key == fn_atom)
-                possible_overloads.push_back(def.value);
+                candidates.push_back(def.value);
         }
     }
 
@@ -119,49 +102,46 @@ static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
     std::vector<Type*> best_overload_template_types;
     std::vector<Node*> new_tmp_args(call->args.size());
 
-    for (AST_Function* ast_fn : possible_overloads) {
+    for (AST_Function* ast_fn : candidates) {
         i32 friction = 0;
         std::vector<Type*> template_types(ast_fn->template_params.size());
 
         for (int i = 0; i < call->args.size(); i++) {
             Node* _param_type = ast_fn->params[i].type;
-            Type* param_type = dynamic_cast<Type*>(_param_type); // FIXME type
+            Type* param_type = dynamic_cast<Type*>(_param_type); // FIXME type?
             UnresolvedRef* ph = dynamic_cast<UnresolvedRef*>(_param_type);
 
-
-            Node* resolved_arg = nullptr;
-
             if (param_type) {
-                // non-templated param
-                resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], param_type, &friction, scope);
-            } else if (ph) {
+                // non-templated parameter:
+                if (!(new_tmp_args[i] = call->args[i]->cast(param_type, scope, &friction)))
+                    goto NextOverload;
+            } 
 
+            else if (ph) {
+                // templated parameter:
+
+                // Find the index of the template parameter
+                // in foo[A, B, C, D](...)    C is index 2
                 int index = -1;
                 for (int i = 0; i < ast_fn->template_params.size(); i++)
                     if (ph->atom == ast_fn->template_params[i]) {
                         index = i;
                         break;
                     }
-                assert(index >= 0); // FIXME
+                assert(index >= 0); // FIXME throw sane error here
 
-
-                // templated param
                 if (template_types[index]) {
-                    // the template has already been resolved
-                    resolved_arg = call->args[i]->resolve_pass_cast_wrapper(&call->args[i], template_types[index], &friction, scope);
+                    // the template parameter has already been pinned to a type
+                    if (!(new_tmp_args[i] = call->args[i]->cast(template_types[index], scope, &friction)))
+                        goto NextOverload;
                 } else {
-                    // the template hasn't yet been resolved.
-                    resolved_arg = call->args[i]->resolve_pass(nullptr, nullptr, scope);
-                    template_types[index] = resolved_arg->get_type();
+                    // the template hasn't yet been resolved. pin it to the type of the argument
+                    template_types[index] = call->args[i]->get_type();
                 }
             }
             else {
                 UNREACHABLE(); // we should've failed earlier when checking for invalid types
             }
-            if (!resolved_arg)
-                goto NextOverload;
-
-            new_tmp_args[i] = resolved_arg;
         }
 
         if (friction < min_friction) {
@@ -188,81 +168,79 @@ NextOverload:;
 
 
 
-Node* Call::resolve_pass(Type* wanted_type, int*, Scope* scope) {
-    if (tried_resolved) {
-        if (!resolved || (wanted_type && wanted_type != get_type()))
-            return nullptr;
-        return this;
-    }
+Node* Call::resolve(Scope* parent) {
+    if (tried_resolved)
+        return resolved ? this : nullptr;
     tried_resolved = true;
 
     Atom fn_atom = fn->as_atom_reference();
 
     if (fn_atom == ':') {
+        // The call is actually a definition (x: int)
         Atom identifier = args[0]->as_atom_reference();
         if (!identifier) {
             add_error(new InvalidDeclarationError(this));
             return nullptr;
         }
 
-        Type* type = (Type*)args[1]->resolve_pass(&t_type, 0, scope);
-        if (!type) {
-            add_error(new NotATypeError(args[1]));
-            return nullptr;
-        }
+        Type* type = as_type(args[1]->resolve(parent));
+        MUST (type);
 
-        return scope->define_variable(identifier, type, this);
-    } else {
+        return parent->define_variable(identifier, type, this);
+    } 
+
+    else {
+        // The call is an operator/regular fn call
         if (!fn_atom) {
             add_error(new InvalidCallError(this));
             return nullptr;
         }
 
-        if (pick_non_template_overload(this, fn_atom, scope)) {
+        for (Node*& arg : args)
+            MUST (arg = arg->resolve(parent));
+
+        if (pick_non_template_overload(this, fn_atom, parent)) {
             resolved = true;
-        } else if (pick_template_overload(this, fn_atom, scope)) {
+        } else if (pick_template_overload(this, fn_atom, parent)) {
             resolved = true;
         } else {
             add_error(new InvalidCallError(this));
             return nullptr;
         }
-    }
 
-    return (!wanted_type || wanted_type == get_type()) ? this : nullptr;
+        return this;
+    }
 }
 
 
 
-Node* UnresolvedRef::resolve_pass(Type* type, int*, Scope* scope) {
-    // assuming we're resolving a variable
-    for (Scope* s = scope; s != nullptr; s = s->parent) {
-        for (auto& vardecl: s->regular_namespace) {
-            if (vardecl.first == atom && (!type || type == vardecl.second->get_type()))
-                return vardecl.second;
-        }
+Node* UnresolvedRef::resolve(Scope* parent_scope) {
+    for (Scope* s = parent_scope; s != nullptr; s = s->parent) {
+        auto it = s->regular_namespace.find(atom);
+        if (it != s->regular_namespace.end())
+            return it->second;
     }
     return nullptr;
 }
 
 bool IfStatement::forward_declare_pass(Scope* scope) {
     MUST (root_scope->forward_declare_pass(scope));
-    MUST (condition->forward_declare_pass(root_scope)); // is this needed?
+    MUST (condition->forward_declare_pass(root_scope));
     MUST (then_block->forward_declare_pass(scope));
     if (else_block)
         MUST (else_block->forward_declare_pass(scope));
     return true;
 }
 
-Node* IfStatement::resolve_pass(Type* type, int* friction, Scope* scope) {
-
-    Node* _condition = condition->resolve_pass(nullptr, 0, root_scope);
+bool IfStatement::resolve_children() {
+    Node* _condition = condition->resolve(root_scope);
     MUST (_condition);
     condition = _condition;
 
-    MUST (then_block->resolve_pass(nullptr, nullptr, root_scope));
+    MUST (then_block->resolve_children());
     if (else_block)
-        MUST (else_block->resolve_pass(nullptr, nullptr, root_scope));
-    return this;
+        MUST (else_block->resolve_children());
+    return true;
 }
 
 Type* Cast::get_type()          { NOT_IMPLEMENTED(); }

@@ -17,5 +17,5 @@ struct IfStatement : Node {
     }
 
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
+    virtual bool resolve_children() override;
 };

@@ -40,7 +40,7 @@ struct AST_Function_Instance : Function {
 
     AST_Function_Instance(AST_Function* ast_fn);
     AST_Function_Instance(AST_Function* ast_fn, const std::vector<Type*>& template_types);
-    virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
+    virtual bool  resolve_children() override;
     virtual FunctionType* get_fn_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
 };

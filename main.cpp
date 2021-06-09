@@ -25,7 +25,7 @@ int main(int argc, const char** argv) {
         std::cout << "parse() failed\n";
     } else if (!global->scope->forward_declare_pass(nullptr)) {
         std::cout << "forward_declare_pass() failed\n";
-    } else if (!global->scope->resolve_pass(nullptr, nullptr, nullptr)) {
+    } else if (!global->scope->resolve_children()) {
         std::cout << "resolve_pass() failed\n";
     } else {
         std::cout << global->scope << "\n\n\n";

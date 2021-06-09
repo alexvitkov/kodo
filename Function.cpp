@@ -71,18 +71,22 @@ bool AST_Function::forward_declare_pass(Scope* scope) {
     return true;
 }
 
-Node* AST_Function_Instance::resolve_pass(Type* wanted_type, int* friction, Scope* scope) {
-    // FIXME make sure argument types & template argument types are actually types
+bool AST_Function_Instance::resolve_children() {
+
+    for (Node* _param_type : type->params) {
+        Type* param_type = as_type(_param_type->resolve(body));
+        MUST (param_type);
+    }
+
 
     for (int i = 0; i < type->params.size(); i++) {
-        Type* t = (Type*)type->params[i]->resolve_pass(&t_type, nullptr, body);
-        assert(t); // FIXME
+        Type* t = as_type(type->params[i]->resolve(body));
+        MUST (t);
         body->define_variable(ast_fn->params[i].name, t, nullptr);
     }
 
-    MUST (body->resolve_pass(nullptr, nullptr, scope));
-    return this;
-    return this;
+    MUST (body->resolve_children());
+    return true;
 }
 
 AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn)
@@ -125,6 +129,6 @@ Function* AST_Function::get_instance(const std::vector<Type*>& template_args) {
     // FIXME uniqueness
     Function* fn = new AST_Function_Instance(this, template_args);
     MUST (fn->forward_declare_pass(body->parent));
-    MUST (fn->resolve_pass(nullptr, nullptr, body->parent));
+    MUST (fn->resolve_children());
     return fn;
 }

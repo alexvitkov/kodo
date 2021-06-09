@@ -12,18 +12,10 @@ struct Node {
 
     virtual bool forward_declare_pass(Scope* scope);
 
-    virtual Node* resolve_pass(
-        Type* wanted_type,
-        int* friction,
-        Scope* scope
-    );
+    virtual bool  resolve_children();
+    virtual Node* resolve(Scope* parent);
 
-    Node* resolve_pass_cast_wrapper(
-        Node** location,
-        Type* wanted_type,
-        int* friction,
-        Scope* scope
-    );
+
 
     // this method is used by the parser tests to check if
     // two nodes have the same structure
@@ -32,9 +24,13 @@ struct Node {
     
     virtual Node* clone();
 
+    Node* cast(Type* target_type, Scope* scope, i32* friction);
+
     Atom as_atom_reference();
 
     virtual ~Node();
 };
+
+Type* as_type(Node* n);
 
 std::ostream& operator<<(std::ostream& o, Node* n);

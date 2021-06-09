@@ -10,6 +10,21 @@
 #include <Node/Variable.h>
 #include <Node/Cast.h>
 
+Node* Node::cast(Type* target_type, Scope* scope, i32* friction) {
+    if (get_type() == target_type)
+        return this;
+
+    for (Scope* s = scope; s != nullptr; s = s->parent) {
+        for (Cast* cast : s->casts) {
+            if (cast->destination_type == target_type && cast->source_type == get_type()) {
+                (*friction)++;
+                return cast->get_node(this);
+            }
+        }
+    }
+
+    return nullptr;
+}
 
 Node* Node::clone() {
     NOT_IMPLEMENTED(); // child classes must override this
@@ -17,6 +32,17 @@ Node* Node::clone() {
 
 Type* Node::get_type() {
     NOT_IMPLEMENTED(); // child classes must override this
+}
+
+Type* as_type(Node* n) { 
+    if (!n)
+        return nullptr;
+
+    Type* t = dynamic_cast<Type*>(n);
+
+    if (!t)
+        add_error(new NotATypeError(n));
+    return t;
 }
 
 void Node::print(std::ostream& o, bool print_definition) {

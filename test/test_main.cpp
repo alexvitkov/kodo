@@ -135,7 +135,7 @@ bool run_must_resolve_test(InputFile* input) {
     MUST (input->lex());
     MUST (input->parse());
     MUST (global->scope->forward_declare_pass(nullptr));
-    MUST (global->scope->resolve_pass(nullptr, nullptr, nullptr));
+    MUST (global->scope->resolve_children());
     return true;
 }
 
@@ -145,7 +145,7 @@ bool run_must_not_resolve_test(InputFile* input) {
 
     if (!global->scope->forward_declare_pass(nullptr))
         return true;
-    if (!global->scope->resolve_pass(nullptr, nullptr, nullptr))
+    if (!global->scope->resolve_children())
         return true;
 
     return false;
