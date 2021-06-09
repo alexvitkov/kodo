@@ -38,6 +38,9 @@ Node* Node::resolve(Scope* parent) {
 }
 
 bool Scope::resolve_children() {
+    for (auto& fn : fn_definitions)
+        MUST (fn.value->resolve_children());
+
     for (Node*& stmt : statements)
         MUST (stmt = stmt->resolve(this));
     return true;

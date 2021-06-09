@@ -19,9 +19,10 @@ struct Call : Node {
     Node* rotate();
 
     virtual Type* get_type() override;
-    virtual Node* clone() override;
+    virtual Node* clone(Scope* parent_scope) override;
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual Node* resolve(Scope* parent) override;
+    virtual RuntimeValue* evaluate(Interpreter*) override;
 
 
 #ifdef _TEST

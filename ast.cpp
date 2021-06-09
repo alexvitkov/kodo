@@ -2,6 +2,7 @@
 
 #include <Error.h>
 #include <Type.h>
+#include <Interpreter.h>
 
 #include <Node/UnresolvedRef.h>
 #include <Node/Function.h>
@@ -30,13 +31,22 @@ Node* Node::cast(Type* target_type, Scope* scope, i32* friction) {
     return nullptr;
 }
 
-Node* Node::clone() {
-    NOT_IMPLEMENTED(); // child classes must override this
+// child classes must overrride those:
+Node* Node::clone(Scope* parent_scope) { NOT_IMPLEMENTED(); } 
+Type* Node::get_type() { NOT_IMPLEMENTED();  } 
+RuntimeValue* Node::evaluate(Interpreter*) { NOT_IMPLEMENTED(); } 
+bool Node::forward_declare_pass(Scope* scope) { return true; }
+
+
+Type* RuntimeValue::get_type() {
+    return type;
 }
 
-Type* Node::get_type() {
-    NOT_IMPLEMENTED(); // child classes must override this
+RuntimeValue* RuntimeValue::evaluate(Interpreter*) {
+    return this;
 }
+
+
 
 Type* as_type(Node* n) { 
     if (!n)
@@ -99,16 +109,20 @@ Node* Call::rotate() {
     }
 }
 
-
-
-
-
-bool Node::forward_declare_pass(Scope* scope) { 
-    return true; 
+RuntimeValue* Call::evaluate(Interpreter* interpreter) {
+    Function* _fn = dynamic_cast<Function*>(fn);
+    assert(_fn); 
+    return _fn->evaluate_call(interpreter, { args.data(), args.size() });
 }
 
-bool Scope::forward_declare_pass(Scope* scope) {
-    for (Node* n : statements)
-        MUST (n->forward_declare_pass(this));
-    return true;
+
+
+
+RuntimeValue* Variable::evaluate(Interpreter* interpreter) {
+    for (int i = interpreter->scopes.size() - 1; i >= 0; i--) {
+        auto& s = interpreter->scopes[i];
+        if (s.scope == scope)
+            return s.values[name];
+    }
+    return nullptr;
 }

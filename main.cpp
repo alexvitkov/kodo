@@ -2,6 +2,7 @@
 #include <Type.h>
 #include <Node/Scope.h>
 #include <Node/Cast.h>
+#include <Interpreter.h>
 
 #include <iostream>
 
@@ -29,8 +30,12 @@ int main(int argc, const char** argv) {
         std::cout << "resolve_pass() failed\n";
     } else {
         std::cout << global->scope << "\n\n\n";
+        Interpreter* interpreter = new Interpreter();
+        interpreter->push_scope(global->scope);
+        std::cout << "Result: " << global->scope->evaluate(interpreter) << "\n";
         return 0;
     }
+
 
     std::cout << "\n";
     for (Error* err : global->errors) {

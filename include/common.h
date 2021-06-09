@@ -34,6 +34,18 @@ Atom string_to_atom(const char* str, int length);
 
 #include <assert.h>
 #define UNREACHABLE() { assert(!"UNREACHABLE"); }
-#define NOT_IMPLEMENTED() { assert(!"NOT_IMPLEMENTED"); }
+#define NOT_IMPLEMENTED() { std::cout.flush(); assert(!"NOT_IMPLEMENTED"); }
 
 #define MUST(f) { if (!(f)) return 0; }
+
+
+template <typename T>
+struct Slice {
+    T* start;
+    u64 size;
+    
+    //inline T& begin() { return start[9]; }
+    //inline T& end() { return start[size]; }
+
+    inline T& operator[](u64 index) { return start[index]; };
+};

@@ -27,6 +27,7 @@ set(SOURCES
     parser.cpp
     NumberLiteral.cpp
     Function.cpp
+    Interpreter.cpp
     keywords.gperf.gen.inc)
 
 

@@ -6,11 +6,6 @@ Type* NumberLiteral::get_type() {
     return &t_number_literal; 
 }
 
-Type* CastedNumberLiteral::get_type() { 
-    return type;
-}
-
-
 void NumberLiteral::print(std::ostream& o, bool print_definition) {
     if (digits.size() == 0) {
         o << '0';
@@ -24,10 +19,6 @@ void NumberLiteral::print(std::ostream& o, bool print_definition) {
         o << (int)digits[i];
 }
 
-void CastedNumberLiteral::print(std::ostream& o, bool print_definition) {
-    o << number << type;
-}
-
 NumberLiteralToPrimitiveCast::NumberLiteralToPrimitiveCast(Type* _destination_type) {
     this->destination_type = _destination_type;
     this->source_type = &t_number_literal;
@@ -37,18 +28,25 @@ NumberLiteralToPrimitiveCast::NumberLiteralToPrimitiveCast(Type* _destination_ty
 Node* NumberLiteralToPrimitiveCast::get_node(Node* source) {
     NumberLiteral* nl = (NumberLiteral*)source;
 
-    CastedNumberLiteral* casted = new CastedNumberLiteral();
+    RuntimeValue* casted = new RuntimeValue();
 
     casted->type = destination_type;
-    casted->number = 0;
+    casted->int_value = 0;
 
     for (int i = 0; i < nl->digits.size(); i++) {
-        casted->number *= 10;
-        casted->number += nl->digits[i];
+        casted->int_value *= 10;
+        casted->int_value += nl->digits[i];
     }
 
     if (nl->negative)
-        casted->number = -casted->number;
+        casted->int_value = -casted->int_value;
 
     return casted;
+}
+
+RuntimeValue* NumberLiteral::evaluate(Interpreter* interpreter) {
+    RuntimeValue* val = new RuntimeValue();
+    val->type = &t_number_literal;
+    val->data = this;
+    return val;
 }

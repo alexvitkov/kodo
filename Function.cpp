@@ -1,8 +1,10 @@
 #include <Node/UnresolvedRef.h>
 #include <Node/Function.h>
+#include <Node/Variable.h>
 #include <iostream>
 #include <unordered_map>
 #include <Node/Scope.h>
+#include <Interpreter.h>
 
 struct FunctionTypeHash {
     size_t operator() (const FunctionType& ft) const {
@@ -93,7 +95,7 @@ AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn)
     : ast_fn(ast_fn) 
 {
     name = ast_fn->name;
-    body = (Scope*)ast_fn->body->clone();
+    body = (Scope*)ast_fn->body->clone(ast_fn->body->parent);
 
     FunctionType type_temp;
     type_temp.return_type = ast_fn->return_type;
@@ -109,7 +111,7 @@ AST_Function_Instance::AST_Function_Instance(AST_Function* ast_fn, const std::ve
     : ast_fn(ast_fn) 
 {
     name = ast_fn->name;
-    body = (Scope*)ast_fn->body->clone();
+    body = (Scope*)ast_fn->body->clone(ast_fn->body->parent);
     for (int i = 0;  i < template_args.size(); i++)
         body->define(ast_fn->template_params[i], template_args[i]);
 
@@ -131,4 +133,43 @@ Function* AST_Function::get_instance(const std::vector<Type*>& template_args) {
     MUST (fn->forward_declare_pass(body->parent));
     MUST (fn->resolve_children());
     return fn;
+}
+
+RuntimeValue* AST_Function::evaluate(Interpreter*) {
+    return nullptr; // FIXME
+}
+
+RuntimeValue* Function::evaluate(Interpreter*) {
+    return nullptr; // FIXME
+}
+
+RuntimeValue* AST_Function_Instance::evaluate_call(Interpreter* interpreter, Slice<Node*> args) {
+    interpreter->push_scope(body);
+    for (int i = 0; i < args.size; i++) {
+        RuntimeValue* val = args[i]->evaluate(interpreter);
+        MUST (val);
+        interpreter->current_scope().values[ast_fn->params[i].name] = val;
+    }
+
+    auto val = body->evaluate(interpreter);
+
+    interpreter->pop_scope();
+    return val;
+}
+
+RuntimeValue* DefaultAssignmentOperator::evaluate_call(Interpreter* interpreter, Slice<Node*> args) {
+    Variable* var = dynamic_cast<Variable*>(args[0]);
+    assert(var); // FIXME
+    RuntimeValue* val = args[1]->evaluate(interpreter);
+
+
+    for (int i = interpreter->scopes.size() - 1; i >= 0; i--) {
+        auto& s = interpreter->scopes[i];
+        if (s.scope == var->scope) {
+            s.values[var->name] = val;
+            return val;
+        }
+    }
+
+    return nullptr;
 }

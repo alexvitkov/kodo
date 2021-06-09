@@ -6,6 +6,7 @@
 #include <Node/Variable.h>
 #include <Node/Cast.h>
 #include <Node/IfStatement.h>
+#include <Node/NumberLiteral.h>
 
 #include <iostream>
 
@@ -46,7 +47,6 @@ void AST_Function::print(std::ostream& o, bool print_definition) {
             o << ']';
         }
 
-
         o << '(';
         for (int i = 0; i < params.size(); i++) {
             o << params[i].name << ": " << params[i].type;
@@ -70,16 +70,27 @@ void Scope::print(std::ostream& o, bool print_definition) {
         stmt->print(o, true);
         o << ";\n";
     }
+
+    if (!fn_definitions.empty()) {
+        o << "\n";
+        print_indent(o);
+        o << "Defined functions:\n";
+
+        for (auto& fn : fn_definitions) {
+            print_indent(o);
+            fn.value->print(o, true);
+            o << "\n";
+        }
+    }
+
+
     indent --;
     print_indent(o);
     o << "}";
 };
 
 void Variable::print(std::ostream& o, bool print_definition) {
-    //if (print_definition)
-        o << name << ": " << type;
-    //else
-        //o << "\u001b[35m" << name << "\u001b[0m";
+    o << "\u001b[35m" << name << "\u001b[0m" << ":" << type;
 }
 
 
@@ -148,16 +159,55 @@ void IfStatement::print(std::ostream& o, bool print_definition) {
 }
 
 void AST_Function_Instance::print(std::ostream& o, bool print_definition) {
-    o << name;
-    
-    if (!template_types.empty()) {
-        o << "[";
-        for (int i = 0; i < template_types.size(); i++) {
-            o << template_types[i];
-            if (i != template_types.size() - 1)
+
+    if (print_definition || !name) {
+        o << "fn ";
+        if (name)
+            o << name;
+
+        if (!template_types.empty()) {
+            o << "[";
+            for (int i = 0; i < template_types.size(); i++) {
+                o << template_types[i];
+                if (i != template_types.size() - 1)
+                    o << ", ";
+            }
+            o << "]";
+        }
+
+        o << '(';
+        for (int i = 0; i < get_fn_type()->params.size(); i++) {
+            o << ast_fn->params[i].name << ": " << get_fn_type()->params[i];
+            if (i != get_fn_type()->params.size() - 1)
                 o << ", ";
         }
-        o << "]";
+        o << ") " << body;
+    } else {
+        o << name;
+        if (!template_types.empty()) {
+            o << "[";
+            for (int i = 0; i < template_types.size(); i++) {
+                o << template_types[i];
+                if (i != template_types.size() - 1)
+                    o << ", ";
+            }
+            o << "]";
+        }
     }
 
+}
+
+void RuntimeValue::print(std::ostream& o, bool print_definition) {
+    if (type == &t_number_literal) {
+        o << (NumberLiteral*)data;
+    } 
+    else if (type == &t_i64 || type == &t_i32 || type == &t_i16 || type == &t_i8) {
+        o << int_value;
+    }
+    else if (type == &t_u64 || type == &t_u32 || type == &t_u16 || type == &t_u8) {
+        o << int_value;
+    }
+    else {
+        o << "RuntimeValue(" << type << ")";
+    }
 }

@@ -44,7 +44,8 @@ struct Scope : Node {
     Node* define(Atom key, Node* value);
 
     virtual bool forward_declare_pass(Scope* scope) override;
-    virtual Node* clone() override;
+    virtual Node* clone(Scope* parent_scope) override;
+    virtual RuntimeValue* evaluate(Interpreter* interpreter) override;
     virtual bool resolve_children() override;
 
 #ifdef _TEST

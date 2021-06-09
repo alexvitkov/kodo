@@ -5,17 +5,22 @@
 
 struct Type;
 struct Scope;
+struct RuntimeValue;
+struct Interpreter;
+
 
 struct Node {
     virtual Type* get_type();
     virtual void  print(std::ostream& o, bool print_definition);
-    virtual Node* clone();
+    virtual Node* clone(Scope* parent_scope);
+    virtual RuntimeValue* evaluate(Interpreter* interpreter);
 
     virtual bool  forward_declare_pass(Scope* scope);
     virtual bool  resolve_children();
     virtual Node* resolve(Scope* parent);
 
     virtual ~Node();
+
 
 
     Node* cast(Type* target_type, Scope* scope, i32* friction);
@@ -27,6 +32,19 @@ struct Node {
 #endif
 
 };
+
+struct RuntimeValue : Node {
+    Type* type;
+    union {
+        void* data;
+        i64 int_value;
+    };
+
+    virtual Type* get_type() override;
+    virtual void print(std::ostream& o, bool print_definition) override;
+    virtual RuntimeValue* evaluate(Interpreter* interpreter) override;
+};
+
 
 Type* as_type(Node* n);
 Type* as_runtime_type(Node* n);

@@ -3,6 +3,7 @@
 #include <Node/Scope.h>
 #include <Node/Function.h>
 #include <Node/Variable.h>
+#include <Interpreter.h>
 
 
 void Scope::init_global_scope() {
@@ -10,6 +11,12 @@ void Scope::init_global_scope() {
         casts.push_back(new NumberLiteralToPrimitiveCast(t));
         define_function('=', new DefaultAssignmentOperator(t));
     }
+}
+
+bool Scope::forward_declare_pass(Scope* scope) {
+    for (Node* n : statements)
+        MUST (n->forward_declare_pass(this));
+    return true;
 }
 
 bool Scope::define_function(Atom key, AST_Function* value) {
@@ -59,4 +66,15 @@ Node* Scope::define(Atom key, Node* value) {
     regular_namespace[key] = value;
 
     return value;
+}
+
+RuntimeValue* Scope::evaluate(Interpreter* interpreter) {
+    for (int i = 0; i < statements.size(); i++) {
+        RuntimeValue* rv = statements[i]->evaluate(interpreter);
+        if (i == statements.size() - 1) {
+            return rv;
+        }
+    }
+
+    return nullptr;
 }

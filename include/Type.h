@@ -9,6 +9,7 @@ struct Type : Node {
     Atom atom;
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
+    virtual Node* clone(Scope*) override;
     virtual bool is_ethereal();
     inline Type(Atom atom) : atom(atom) {}
 };
