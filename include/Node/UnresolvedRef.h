@@ -10,5 +10,8 @@ struct UnresolvedRef : Node {
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual Node* resolve(Scope* parent) override;
+
+#ifdef _TEST
     virtual bool tree_compare(Node* other) override;
+#endif
 };

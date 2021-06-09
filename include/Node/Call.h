@@ -14,14 +14,17 @@ struct Call : Node {
     std::vector<Node*> args;
 
 
-
     inline Call(Node* fn) : fn(fn) {}
     inline Call(Atom fn, Node* lhs, Node* rhs) : fn(new UnresolvedRef(fn)), args { lhs, rhs } {};
+    Node* rotate();
 
     virtual Type* get_type() override;
     virtual Node* clone() override;
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual Node* resolve(Scope* parent) override;
+
+
+#ifdef _TEST
     virtual bool tree_compare(Node* other) override;
-    Node* rotate();
+#endif
 };

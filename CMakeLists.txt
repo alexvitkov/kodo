@@ -22,7 +22,6 @@ set(SOURCES
     Scope.cpp
     node_clone.cpp
     node_print.cpp
-    node_tree_compare.cpp
     type.cpp
     lexer.cpp
     parser.cpp
@@ -37,12 +36,15 @@ add_executable(kodo
 
 add_executable(kodo_test
     test/test_main.cpp
+    node_tree_compare.cpp
     ${SOURCES})
 
 target_include_directories(kodo      PRIVATE include)
 target_include_directories(kodo_test PRIVATE include)
 set_property(TARGET kodo      PROPERTY CXX_STANDARD 20)
 set_property(TARGET kodo_test PROPERTY CXX_STANDARD 20)
+
+target_compile_definitions(kodo_test PUBLIC _TEST)
 
 find_package(Threads REQUIRED)
 target_link_libraries(kodo Threads::Threads)
