@@ -183,11 +183,32 @@ Node* Call::resolve(Scope* parent) {
             return nullptr;
         }
 
-        Type* type = as_type(args[1]->resolve(parent));
+        Type* type = as_runtime_type(args[1]->resolve(parent));
         MUST (type);
 
         return parent->define_variable(identifier, type, this);
     } 
+
+    else if (fn_atom == TOK_INFERDECL) {
+        // declaration without specified type, x := 123
+        Atom identifier = args[0]->as_atom_reference();
+        if (!identifier) {
+            add_error(new InvalidDeclarationError(this));
+            return nullptr;
+        }
+
+        Node* value = args[1]->resolve(parent);
+        Type* variable_type = as_runtime_type(value->get_type());
+        MUST (variable_type);
+
+        if (variable_type != value->get_type())
+            value = value->cast(variable_type, parent, nullptr);
+
+        Variable* var = parent->define_variable(identifier, variable_type, this);
+
+        Node* assignment = (new Call('=', var, value))->resolve(parent);
+        return assignment;
+    }
 
     else {
         // The call is an operator/regular fn call

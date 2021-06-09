@@ -76,10 +76,10 @@ void Scope::print(std::ostream& o, bool print_definition) {
 };
 
 void Variable::print(std::ostream& o, bool print_definition) {
-    if (print_definition)
+    //if (print_definition)
         o << name << ": " << type;
-    else
-        o << "\u001b[35m" << name << "\u001b[0m";
+    //else
+        //o << "\u001b[35m" << name << "\u001b[0m";
 }
 
 
@@ -150,12 +150,14 @@ void IfStatement::print(std::ostream& o, bool print_definition) {
 void AST_Function_Instance::print(std::ostream& o, bool print_definition) {
     o << name;
     
-    o << "[";
-    for (int i = 0; i < template_types.size(); i++) {
-        o << template_types[i];
-        if (i != template_types.size() - 1)
-            o << ", ";
+    if (!template_types.empty()) {
+        o << "[";
+        for (int i = 0; i < template_types.size(); i++) {
+            o << template_types[i];
+            if (i != template_types.size() - 1)
+                o << ", ";
+        }
+        o << "]";
     }
-    o << "]";
 
 }

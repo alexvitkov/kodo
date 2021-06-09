@@ -29,4 +29,5 @@ struct Node {
 };
 
 Type* as_type(Node* n);
+Type* as_runtime_type(Node* n);
 std::ostream& operator<<(std::ostream& o, Node* n);

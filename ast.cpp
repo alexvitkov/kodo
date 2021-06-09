@@ -14,10 +14,14 @@ Node* Node::cast(Type* target_type, Scope* scope, i32* friction) {
     if (get_type() == target_type)
         return this;
 
+    // FIXME
+    // if we pass a Variable/Call of type number_literal for example
+    // this will fail terribly as the cast expects a NumberLiteral
+    // but we're giving it a Variable/Call
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (Cast* cast : s->casts) {
             if (cast->destination_type == target_type && cast->source_type == get_type()) {
-                (*friction)++;
+                if (friction) (*friction)++;
                 return cast->get_node(this);
             }
         }
@@ -42,6 +46,15 @@ Type* as_type(Node* n) {
 
     if (!t)
         add_error(new NotATypeError(n));
+    return t;
+}
+
+Type* as_runtime_type(Node* n) { 
+    Type* t = as_type(n);
+    // FIXME here we shall cast number_literal and other compile-time only types
+    // to a default runtime type
+    if (t == &t_number_literal)
+        return &t_i64;
     return t;
 }
 
