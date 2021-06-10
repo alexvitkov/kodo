@@ -60,6 +60,10 @@ FunctionType* DefaultAssignmentOperator::get_fn_type() {
     return type; 
 }
 
+FunctionType* PrimitiveOperator::get_fn_type() { 
+    return fn_type; 
+}
+
 bool AST_Function::forward_declare_pass(Scope* scope) { 
     if (name) {
         if (template_params.empty()) {
@@ -172,4 +176,17 @@ RuntimeValue* DefaultAssignmentOperator::evaluate_call(Interpreter* interpreter,
     }
 
     return nullptr;
+}
+
+RuntimeValue* PrimitiveOperator::evaluate_call(Interpreter* interpreter, Slice<Node*> args) {
+    RuntimeValue* r0 = args[0]->evaluate(interpreter);
+    RuntimeValue* r1 = args[1]->evaluate(interpreter);
+    MUST (r0 && r1);
+
+    RuntimeValue* res = new RuntimeValue();
+    res->type = this->operating_type;
+
+    res->int_value = r0->int_value + r1->int_value;
+
+    return res;
 }

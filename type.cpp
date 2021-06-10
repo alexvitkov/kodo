@@ -142,6 +142,7 @@ static bool pick_template_overload(Call* call, Atom fn_atom, Scope* scope) {
                 } else {
                     // the template hasn't yet been resolved. pin it to the type of the argument
                     template_types[index] = call->args[i]->get_type();
+                    new_tmp_args[i] = call->args[i];
                 }
             }
             else {

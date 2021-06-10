@@ -30,7 +30,7 @@ struct AST_Function : Node {
 
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual Type* get_type() override;
-    virtual RuntimeValue* evaluate(Interpreter*);
+    virtual RuntimeValue* evaluate(Interpreter*) override;
     virtual bool forward_declare_pass(Scope* scope) override;
     // virtual Node* resolve_pass(Type* wanted_type, int* friction, Scope* scope) override;
 };
@@ -62,4 +62,18 @@ struct DefaultAssignmentOperator : Function {
         name = '=';
         type = FunctionType::get(the_Type, { the_Type, the_Type });
     }
+};
+
+
+struct PrimitiveOperator : Function {
+    FunctionType* fn_type;
+    Type* operating_type;
+
+    inline PrimitiveOperator(Atom atom, Type* operating_type) : operating_type(operating_type) {
+        name = atom;
+        fn_type = FunctionType::get(operating_type, { operating_type, operating_type });
+    }
+
+    virtual FunctionType* get_fn_type() override;
+    virtual RuntimeValue* evaluate_call(Interpreter*, Slice<Node*> args) override;
 };

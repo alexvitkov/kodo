@@ -10,6 +10,7 @@ void Scope::init_global_scope() {
     for (Type* t : primitive_numeric_types) {
         casts.push_back(new NumberLiteralToPrimitiveCast(t));
         define_function('=', new DefaultAssignmentOperator(t));
+        define_function('+', new PrimitiveOperator('+', t));
     }
 }
 

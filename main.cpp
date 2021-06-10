@@ -16,11 +16,16 @@ GlobalContext* global;
 int main(int argc, const char** argv) {
     global = new GlobalContext();
 
-    InputFile* f = global->add_source("test.kodo");
-    if (!f)
-        return 1;
+    InputFile* f;
+    if (argc == 2) {
+        f = global->add_source(argv[1]);
+    } else {
+        f = global->add_source("test.kodo");
+    }
 
-    if (!f->lex()) {
+    if (!f) {
+        std::cout << "add_source() failed\n";
+    } else if (!f->lex()) {
         std::cout << "lex() failed\n";
     } else if (!f->parse()) {
         std::cout << "parse() failed\n";

@@ -5,6 +5,7 @@
 #include <Node.h>
 #include <common.h>
 #include <GlobalContext.h>
+#include <Interpreter.h>
 
 
 #include <sys/ioctl.h>
@@ -17,6 +18,7 @@ const std::string must_parse_tests = "test/must_parse";
 const std::string must_resolve_tests = "test/must_resolve";
 const std::string must_not_resolve_tests = "test/must_not_resolve";
 const std::string must_not_parse_tests = "test/must_not_parse";
+const std::string must_interpret_equal_tests = "test/must_interpret_equal";
 
 bool do_match = false;
 std::string match;
@@ -158,6 +160,34 @@ bool run_must_not_forward_declare_test(InputFile* input) {
     return true;
 }
 
+bool run_must_interpret_equal_test(InputFile* input) {
+    MUST (input->lex());
+    MUST (input->parse());
+    MUST (global->scope->forward_declare_pass(nullptr));
+    MUST (global->scope->resolve_children());
+
+    Scope* s1 = nullptr;
+    Scope* s2 = nullptr;
+
+    for (Node* stmt : global->scope->statements) {
+        if (dynamic_cast<Scope*>(stmt)) {
+            if (!s1)      { s1 = (Scope*)stmt; }
+            else if (!s2) { s2 = (Scope*)stmt; }
+            else          { break; }
+        }
+    }
+
+    MUST (s1 && s2);
+
+    Interpreter* interpreter = new Interpreter();
+
+    MUST (global->scope->evaluate(interpreter));
+    RuntimeValue* r1 = s1->evaluate(interpreter);
+    RuntimeValue* r2 = s2->evaluate(interpreter);
+
+    return *r1 == *r2;
+}
+
 int main(int argc, const char** argv) {
     if (argc > 1) {
         do_match = true;
@@ -175,6 +205,7 @@ int main(int argc, const char** argv) {
     run_test_in_directory(must_resolve_tests, run_must_resolve_test);
     run_test_in_directory(must_not_resolve_tests, run_must_not_resolve_test);
     run_test_in_directory(must_not_parse_tests, run_must_not_parse_test);
+    run_test_in_directory(must_interpret_equal_tests, run_must_interpret_equal_test);
 
     std::cout << "\n";
 

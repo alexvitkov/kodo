@@ -43,6 +43,8 @@ struct RuntimeValue : Node {
     virtual Type* get_type() override;
     virtual void print(std::ostream& o, bool print_definition) override;
     virtual RuntimeValue* evaluate(Interpreter* interpreter) override;
+
+    bool operator==(const RuntimeValue& other) const;
 };
 
 

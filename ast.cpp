@@ -46,6 +46,12 @@ RuntimeValue* RuntimeValue::evaluate(Interpreter*) {
     return this;
 }
 
+bool RuntimeValue::operator==(const RuntimeValue& other) const {
+    MUST (type == other.type);
+    MUST (data == other.data);
+    return true;
+}
+
 
 
 Type* as_type(Node* n) { 
@@ -103,10 +109,10 @@ Node* Call::rotate() {
         auto rotated_child = rhs_call->rotate();
         return rotated_child;
     }
-    else {
+    else if (rhs_atom.is_infix_operator()) {
         args[1] = rhs_call->rotate();
-        return this;
     }
+    return this;
 }
 
 RuntimeValue* Call::evaluate(Interpreter* interpreter) {
