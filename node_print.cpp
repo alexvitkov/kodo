@@ -77,9 +77,11 @@ void Scope::print(std::ostream& o, bool print_definition) {
         o << "Defined functions:\n";
 
         for (auto& fn : fn_definitions) {
-            print_indent(o);
-            fn.value->print(o, true);
-            o << "\n";
+            if (dynamic_cast<AST_Function_Instance*>(fn.value)) {
+                print_indent(o);
+                fn.value->print(o, true);
+                o << "\n";
+            }
         }
     }
 
