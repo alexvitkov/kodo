@@ -1,4 +1,5 @@
 #include <Node/NumberLiteral.h>
+#include <Node/SignedExtend.h>
 #include <iostream>
 
 
@@ -20,7 +21,7 @@ void NumberLiteral::print(std::ostream& o, bool print_definition) {
 }
 
 NumberLiteralToPrimitiveCast::NumberLiteralToPrimitiveCast(Type* _destination_type) {
-    this->destination_type = _destination_type;
+    this->target_type = _destination_type;
     this->source_type = &t_number_literal;
 }
 
@@ -30,7 +31,7 @@ Node* NumberLiteralToPrimitiveCast::get_node(Node* source) {
 
     RuntimeValue* casted = new RuntimeValue();
 
-    casted->type = destination_type;
+    casted->type = target_type;
     casted->int_value = 0;
 
     for (int i = 0; i < nl->digits.size(); i++) {
@@ -44,9 +45,14 @@ Node* NumberLiteralToPrimitiveCast::get_node(Node* source) {
     return casted;
 }
 
+Node* SignedPrimitiveUpcast::get_node(Node* source) {
+    return new SignedExtend(target_type, source);
+}
+
 RuntimeValue* NumberLiteral::evaluate(Interpreter* interpreter) {
     RuntimeValue* val = new RuntimeValue();
     val->type = &t_number_literal;
     val->data = this;
     return val;
 }
+

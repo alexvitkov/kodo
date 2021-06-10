@@ -12,6 +12,15 @@ void Scope::init_global_scope() {
         define_function('=', new DefaultAssignmentOperator(t));
         define_function('+', new PrimitiveOperator('+', t));
     }
+
+    casts.push_back(new SignedPrimitiveUpcast(&t_i64, &t_i8));
+    casts.push_back(new SignedPrimitiveUpcast(&t_i32, &t_i8));
+    casts.push_back(new SignedPrimitiveUpcast(&t_i16, &t_i8));
+
+    casts.push_back(new SignedPrimitiveUpcast(&t_i64, &t_i16));
+    casts.push_back(new SignedPrimitiveUpcast(&t_i32, &t_i16));
+
+    casts.push_back(new SignedPrimitiveUpcast(&t_i64, &t_i32));
 }
 
 bool Scope::forward_declare_pass(Scope* scope) {

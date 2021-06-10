@@ -10,6 +10,7 @@
 #include <Node/Scope.h>
 #include <Node/Variable.h>
 #include <Node/Cast.h>
+#include <Node/SignedExtend.h>
 
 Node* Node::cast(Type* target_type, Scope* scope, i32* friction) {
     if (get_type() == target_type)
@@ -21,7 +22,7 @@ Node* Node::cast(Type* target_type, Scope* scope, i32* friction) {
     // but we're giving it a Variable/Call
     for (Scope* s = scope; s != nullptr; s = s->parent) {
         for (Cast* cast : s->casts) {
-            if (cast->destination_type == target_type && cast->source_type == get_type()) {
+            if (cast->target_type == target_type && cast->source_type == get_type()) {
                 if (friction) (*friction)++;
                 return cast->get_node(this);
             }
@@ -131,4 +132,15 @@ RuntimeValue* Variable::evaluate(Interpreter* interpreter) {
             return s.values[name];
     }
     return nullptr;
+}
+
+
+
+
+RuntimeValue* SignedExtend::evaluate(Interpreter* interpreter) {
+    RuntimeValue* inner_rv = source->evaluate(interpreter);
+    RuntimeValue* casted_rv = new RuntimeValue();
+    casted_rv->type = target_type;
+    casted_rv->int_value = inner_rv->int_value;
+    return casted_rv;
 }
